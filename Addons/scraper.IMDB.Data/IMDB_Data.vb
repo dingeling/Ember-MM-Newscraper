@@ -157,13 +157,13 @@ Public Class IMDB_Data
         _setup_Movie.chkTagline.Checked = ConfigScrapeOptions_Movie.bMainTagline
         _setup_Movie.chkTitle.Checked = ConfigScrapeOptions_Movie.bMainTitle
         _setup_Movie.chkTop250.Checked = ConfigScrapeOptions_Movie.bMainTop250
-        _setup_Movie.chkTrailer.Checked = ConfigScrapeOptions_Movie.bMainTrailer
         _setup_Movie.chkWriters.Checked = ConfigScrapeOptions_Movie.bMainWriters
         _setup_Movie.chkYear.Checked = ConfigScrapeOptions_Movie.bMainYear
 
         _setup_Movie.cbForceTitleLanguage.Text = _SpecialSettings_Movie.ForceTitleLanguage
         _setup_Movie.chkCountryAbbreviation.Checked = _SpecialSettings_Movie.CountryAbbreviation
         _setup_Movie.chkFallBackworldwide.Checked = _SpecialSettings_Movie.FallBackWorldwide
+        _setup_Movie.chkMPAADescription.Checked = _SpecialSettings_Movie.MPAADescription
         _setup_Movie.chkPartialTitles.Checked = _SpecialSettings_Movie.SearchPartialTitles
         _setup_Movie.chkPopularTitles.Checked = _SpecialSettings_Movie.SearchPopularTitles
         _setup_Movie.chkTvTitles.Checked = _SpecialSettings_Movie.SearchTvTitles
@@ -249,13 +249,13 @@ Public Class IMDB_Data
         ConfigScrapeOptions_Movie.bMainTagline = AdvancedSettings.GetBooleanSetting("DoTagline", True, , Enums.ContentType.Movie)
         ConfigScrapeOptions_Movie.bMainTitle = AdvancedSettings.GetBooleanSetting("DoTitle", True, , Enums.ContentType.Movie)
         ConfigScrapeOptions_Movie.bMainTop250 = AdvancedSettings.GetBooleanSetting("DoTop250", True, , Enums.ContentType.Movie)
-        ConfigScrapeOptions_Movie.bMainTrailer = AdvancedSettings.GetBooleanSetting("DoTrailer", True, , Enums.ContentType.Movie)
         ConfigScrapeOptions_Movie.bMainWriters = AdvancedSettings.GetBooleanSetting("DoWriters", True, , Enums.ContentType.Movie)
         ConfigScrapeOptions_Movie.bMainYear = AdvancedSettings.GetBooleanSetting("DoYear", True, , Enums.ContentType.Movie)
 
         _SpecialSettings_Movie.CountryAbbreviation = AdvancedSettings.GetBooleanSetting("CountryAbbreviation", False, , Enums.ContentType.Movie)
         _SpecialSettings_Movie.FallBackWorldwide = AdvancedSettings.GetBooleanSetting("FallBackWorldwide", False, , Enums.ContentType.Movie)
         _SpecialSettings_Movie.ForceTitleLanguage = AdvancedSettings.GetSetting("ForceTitleLanguage", String.Empty, , Enums.ContentType.Movie)
+        _SpecialSettings_Movie.MPAADescription = AdvancedSettings.GetBooleanSetting("MPAADescription", False, , Enums.ContentType.Movie)
         _SpecialSettings_Movie.SearchPartialTitles = AdvancedSettings.GetBooleanSetting("SearchPartialTitles", True, , Enums.ContentType.Movie)
         _SpecialSettings_Movie.SearchPopularTitles = AdvancedSettings.GetBooleanSetting("SearchPopularTitles", True, , Enums.ContentType.Movie)
         _SpecialSettings_Movie.SearchTvTitles = AdvancedSettings.GetBooleanSetting("SearchTvTitles", False, , Enums.ContentType.Movie)
@@ -307,11 +307,11 @@ Public Class IMDB_Data
             settings.SetBooleanSetting("DoTagline", ConfigScrapeOptions_Movie.bMainTagline, , , Enums.ContentType.Movie)
             settings.SetBooleanSetting("DoTitle", ConfigScrapeOptions_Movie.bMainTitle, , , Enums.ContentType.Movie)
             settings.SetBooleanSetting("DoTop250", ConfigScrapeOptions_Movie.bMainTop250, , , Enums.ContentType.Movie)
-            settings.SetBooleanSetting("DoTrailer", ConfigScrapeOptions_Movie.bMainTrailer, , , Enums.ContentType.Movie)
             settings.SetBooleanSetting("DoWriters", ConfigScrapeOptions_Movie.bMainWriters, , , Enums.ContentType.Movie)
             settings.SetBooleanSetting("DoYear", ConfigScrapeOptions_Movie.bMainYear, , , Enums.ContentType.Movie)
             settings.SetBooleanSetting("CountryAbbreviation", _SpecialSettings_Movie.CountryAbbreviation, , , Enums.ContentType.Movie)
             settings.SetBooleanSetting("FallBackWorldwide", _SpecialSettings_Movie.FallBackWorldwide, , , Enums.ContentType.Movie)
+            settings.SetBooleanSetting("MPAADescription", _SpecialSettings_Movie.MPAADescription, , , Enums.ContentType.Movie)
             settings.SetBooleanSetting("SearchPartialTitles", _SpecialSettings_Movie.SearchPartialTitles, , , Enums.ContentType.Movie)
             settings.SetBooleanSetting("SearchPopularTitles", _SpecialSettings_Movie.SearchPopularTitles, , , Enums.ContentType.Movie)
             settings.SetBooleanSetting("SearchTvTitles", _SpecialSettings_Movie.SearchTvTitles, , , Enums.ContentType.Movie)
@@ -365,13 +365,13 @@ Public Class IMDB_Data
         ConfigScrapeOptions_Movie.bMainTagline = _setup_Movie.chkTagline.Checked
         ConfigScrapeOptions_Movie.bMainTitle = _setup_Movie.chkTitle.Checked
         ConfigScrapeOptions_Movie.bMainTop250 = _setup_Movie.chkTop250.Checked
-        ConfigScrapeOptions_Movie.bMainTrailer = _setup_Movie.chkTrailer.Checked
         ConfigScrapeOptions_Movie.bMainWriters = _setup_Movie.chkWriters.Checked
         ConfigScrapeOptions_Movie.bMainYear = _setup_Movie.chkYear.Checked
 
         _SpecialSettings_Movie.CountryAbbreviation = _setup_Movie.chkCountryAbbreviation.Checked
         _SpecialSettings_Movie.FallBackWorldwide = _setup_Movie.chkFallBackworldwide.Checked
         _SpecialSettings_Movie.ForceTitleLanguage = _setup_Movie.cbForceTitleLanguage.Text
+        _SpecialSettings_Movie.MPAADescription = _setup_Movie.chkMPAADescription.Checked
         _SpecialSettings_Movie.SearchPartialTitles = _setup_Movie.chkPartialTitles.Checked
         _SpecialSettings_Movie.SearchPopularTitles = _setup_Movie.chkPopularTitles.Checked
         _SpecialSettings_Movie.SearchTvTitles = _setup_Movie.chkTvTitles.Checked
@@ -426,7 +426,7 @@ Public Class IMDB_Data
         End If
 
         LoadSettings_Movie()
-        Dim _scraper As New IMDB.Scraper(_SpecialSettings_Movie)
+        Dim _scraper As New Scraper(_SpecialSettings_Movie)
 
         studio.AddRange(_scraper.GetMovieStudios(DBMovie.Movie.IMDB))
         Return New Interfaces.ModuleResult With {.breakChain = False}
@@ -448,7 +448,8 @@ Public Class IMDB_Data
         LoadSettings_Movie()
 
         Dim nMovie As MediaContainers.Movie = Nothing
-        Dim _scraper As New IMDB.Scraper(_SpecialSettings_Movie)
+        _SpecialSettings_Movie.PrefLanguage = oDBElement.Language
+        Dim _scraper As New Scraper(_SpecialSettings_Movie)
         Dim FilteredOptions As Structures.ScrapeOptions = Functions.ScrapeOptionsAndAlso(ScrapeOptions, ConfigScrapeOptions_Movie)
 
         If ScrapeModifiers.MainNFO AndAlso Not ScrapeModifiers.DoSearch Then
@@ -459,6 +460,7 @@ Public Class IMDB_Data
                 'no IMDB-ID for movie --> search first!
                 nMovie = _scraper.GetSearchMovieInfo(oDBElement.Movie.Title, oDBElement.Movie.Year, oDBElement, ScrapeType, FilteredOptions)
                 'if still no search result -> exit
+                logger.Trace(String.Format("[IMDB_Data] [Scraper_Movie] [Abort] No search result found"))
                 If nMovie Is Nothing Then Return New Interfaces.ModuleResult_Data_Movie With {.Result = Nothing}
             End If
         End If
@@ -466,9 +468,11 @@ Public Class IMDB_Data
         If nMovie Is Nothing Then
             Select Case ScrapeType
                 Case Enums.ScrapeType.AllAuto, Enums.ScrapeType.FilterAuto, Enums.ScrapeType.MarkedAuto, Enums.ScrapeType.MissingAuto, Enums.ScrapeType.NewAuto, Enums.ScrapeType.SelectedAuto
+                    logger.Trace(String.Format("[IMDB_Data] [Scraper_Movie] [Abort] No search result found"))
                     Return New Interfaces.ModuleResult_Data_Movie With {.Result = Nothing}
             End Select
         Else
+            logger.Trace("[IMDB_Data] [Scraper_Movie] [Done]")
             Return New Interfaces.ModuleResult_Data_Movie With {.Result = nMovie}
         End If
 
@@ -480,6 +484,7 @@ Public Class IMDB_Data
                         'if a movie is found, set DoSearch back to "false" for following scrapers
                         ScrapeModifiers.DoSearch = False
                     Else
+                        logger.Trace(String.Format("[IMDB_Data] [Scraper_Movie] [Cancelled] Cancelled by user"))
                         Return New Interfaces.ModuleResult_Data_Movie With {.Cancelled = True, .Result = Nothing}
                     End If
                 End Using
@@ -502,7 +507,8 @@ Public Class IMDB_Data
         LoadSettings_TV()
 
         Dim nTVShow As MediaContainers.TVShow = Nothing
-        Dim _scraper As New IMDB.Scraper(_SpecialSettings_TV)
+        _SpecialSettings_TV.PrefLanguage = oDBElement.Language
+        Dim _scraper As New Scraper(_SpecialSettings_TV)
         Dim FilteredOptions As Structures.ScrapeOptions = Functions.ScrapeOptionsAndAlso(ScrapeOptions, ConfigScrapeOptions_TV)
 
         If ScrapeModifiers.MainNFO AndAlso Not ScrapeModifiers.DoSearch Then
@@ -513,6 +519,7 @@ Public Class IMDB_Data
                 'no IMDB-ID for tvshow --> search first!
                 nTVShow = _scraper.GetSearchTVShowInfo(oDBElement.TVShow.Title, oDBElement, ScrapeType, ScrapeModifiers, FilteredOptions)
                 'if still no search result -> exit
+                logger.Trace(String.Format("[IMDB_Data] [Scraper_TV] [Abort] No search result found"))
                 If nTVShow Is Nothing Then Return New Interfaces.ModuleResult_Data_TVShow With {.Result = Nothing}
             End If
         End If
@@ -520,9 +527,11 @@ Public Class IMDB_Data
         If nTVShow Is Nothing Then
             Select Case ScrapeType
                 Case Enums.ScrapeType.AllAuto, Enums.ScrapeType.FilterAuto, Enums.ScrapeType.MarkedAuto, Enums.ScrapeType.MissingAuto, Enums.ScrapeType.NewAuto, Enums.ScrapeType.SelectedAuto
+                    logger.Trace(String.Format("[IMDB_Data] [Scraper_TV] [Abort] No search result found"))
                     Return New Interfaces.ModuleResult_Data_TVShow With {.Result = Nothing}
             End Select
         Else
+            logger.Trace("[IMDB_Data] [Scraper_TV] [Done]")
             Return New Interfaces.ModuleResult_Data_TVShow With {.Result = nTVShow}
         End If
 
@@ -534,6 +543,7 @@ Public Class IMDB_Data
                         'if a tvshow is found, set DoSearch back to "false" for following scrapers
                         ScrapeModifiers.DoSearch = False
                     Else
+                        logger.Trace(String.Format("[IMDB_Data] [Scraper_TV] [Cancelled] Cancelled by user"))
                         Return New Interfaces.ModuleResult_Data_TVShow With {.Cancelled = True, .Result = Nothing}
                     End If
                 End Using
@@ -550,7 +560,8 @@ Public Class IMDB_Data
         LoadSettings_TV()
 
         Dim nTVEpisode As New MediaContainers.EpisodeDetails
-        Dim _scraper As New IMDB.Scraper(_SpecialSettings_TV)
+        _SpecialSettings_TV.PrefLanguage = oDBTVEpisode.Language
+        Dim _scraper As New Scraper(_SpecialSettings_TV)
         Dim FilteredOptions As Structures.ScrapeOptions = Functions.ScrapeOptionsAndAlso(ScrapeOptions, ConfigScrapeOptions_TV)
 
         If oDBTVEpisode.TVEpisode.IMDBSpecified Then
@@ -586,14 +597,16 @@ Public Class IMDB_Data
 
 #Region "Fields"
 
+        Dim CountryAbbreviation As Boolean
         Dim FallBackWorldwide As Boolean
         Dim ForceTitleLanguage As String
+        Dim MPAADescription As Boolean
+        Dim PrefLanguage As String
         Dim SearchPartialTitles As Boolean
         Dim SearchPopularTitles As Boolean
         Dim SearchTvTitles As Boolean
         Dim SearchVideoTitles As Boolean
         Dim SearchShortTitles As Boolean
-        Dim CountryAbbreviation As Boolean
         Dim StudiowithDistributors As Boolean
 
 #End Region 'Fields

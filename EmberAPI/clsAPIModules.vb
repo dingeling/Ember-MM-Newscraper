@@ -250,9 +250,11 @@ Public Class ModulesManager
 
         If Directory.Exists(moduleLocation) Then
             'add each .dll file to AssemblyList
-            For Each file As String In Directory.GetFiles(moduleLocation, "*.dll")
-                Dim nAssembly As Reflection.Assembly = Reflection.Assembly.LoadFile(file)
-                AssemblyList.Add(New ModulesManager.AssemblyListItem With {.Assembly = nAssembly, .AssemblyName = nAssembly.GetName.Name})
+            For Each inDir In Directory.GetDirectories(moduleLocation)
+                For Each inFile As String In Directory.GetFiles(inDir, "*.dll")
+                    Dim nAssembly As Reflection.Assembly = Reflection.Assembly.LoadFile(inFile)
+                    AssemblyList.Add(New AssemblyListItem With {.Assembly = nAssembly, .AssemblyName = nAssembly.GetName.Name, .AssemblyVersion = nAssembly.GetName().Version})
+                Next
             Next
 
             For Each tAssemblyItem As AssemblyListItem In AssemblyList
@@ -915,6 +917,7 @@ Public Class ModulesManager
                 DBElement.Movie = New MediaContainers.Movie
 
                 DBElement.Movie.Title = StringUtils.FilterTitleFromPath_Movie(DBElement.Filename, DBElement.IsSingle, DBElement.Source.UseFolderName)
+                DBElement.Movie.VideoSource = DBElement.VideoSource
                 DBElement.Movie.Year = StringUtils.FilterYearFromPath_Movie(DBElement.Filename, DBElement.IsSingle, DBElement.Source.UseFolderName)
             End If
 
@@ -1220,6 +1223,7 @@ Public Class ModulesManager
                     sEpisode.ImagesContainer = New MediaContainers.ImagesContainer
                     sEpisode.NfoPath = String.Empty
                     sEpisode.TVEpisode = New MediaContainers.EpisodeDetails With {.Aired = strAired, .Episode = iEpisode, .Season = iSeason}
+                    sEpisode.TVEpisode.VideoSource = sEpisode.VideoSource
                 Next
             End If
 
@@ -1910,8 +1914,9 @@ Public Class ModulesManager
 
 #Region "Fields"
 
-        Public Assembly As System.Reflection.Assembly
+        Public Assembly As Reflection.Assembly
         Public AssemblyName As String
+        Public AssemblyVersion As Version
 
 #End Region 'Fields
 

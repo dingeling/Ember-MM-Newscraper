@@ -101,6 +101,7 @@ Public Class TVDB_Data
         LoadSettings()
         _setup.chkEnabled.Checked = _ScraperEnabled
         _setup.txtApiKey.Text = strPrivateAPIKey
+        _setup.chkFallBackEng.Checked = _SpecialSettings.FallBackEng
         _setup.chkScraperEpisodeActors.Checked = ConfigScrapeOptions.bEpisodeActors
         _setup.chkScraperEpisodeAired.Checked = ConfigScrapeOptions.bEpisodeAired
         _setup.chkScraperEpisodeCredits.Checked = ConfigScrapeOptions.bEpisodeCredits
@@ -167,6 +168,7 @@ Public Class TVDB_Data
 
         strPrivateAPIKey = AdvancedSettings.GetSetting("APIKey", "")
         _SpecialSettings.APIKey = If(String.IsNullOrEmpty(strPrivateAPIKey), "353783CE455412FD", strPrivateAPIKey)
+        _SpecialSettings.FallBackEng = AdvancedSettings.GetBooleanSetting("FallBackEn", False, , Enums.ContentType.TV)
         ConfigScrapeModifiers.DoSearch = True
         ConfigScrapeModifiers.EpisodeMeta = True
         ConfigScrapeModifiers.MainNFO = True
@@ -180,7 +182,7 @@ Public Class TVDB_Data
             settings.SetBooleanSetting("DoDirector", ConfigScrapeOptions.bEpisodeDirectors, , , Enums.ContentType.TVEpisode)
             settings.SetBooleanSetting("DoGuestStars", ConfigScrapeOptions.bEpisodeGuestStars, , , Enums.ContentType.TVEpisode)
             settings.SetBooleanSetting("DoPlot", ConfigScrapeOptions.bEpisodePlot, , , Enums.ContentType.TVEpisode)
-            settings.SetBooleanSetting("DoRating", ConfigScrapeOptions.bMainRating, , , Enums.ContentType.TVEpisode)
+            settings.SetBooleanSetting("DoRating", ConfigScrapeOptions.bEpisodeRating, , , Enums.ContentType.TVEpisode)
             settings.SetBooleanSetting("DoTitle", ConfigScrapeOptions.bEpisodeTitle, , , Enums.ContentType.TVEpisode)
             settings.SetBooleanSetting("DoActors", ConfigScrapeOptions.bMainActors, , , Enums.ContentType.TVShow)
             settings.SetBooleanSetting("DoEpisodeGuide", ConfigScrapeOptions.bMainEpisodeGuide, , , Enums.ContentType.TVShow)
@@ -189,9 +191,11 @@ Public Class TVDB_Data
             settings.SetBooleanSetting("DoPlot", ConfigScrapeOptions.bMainPlot, , , Enums.ContentType.TVShow)
             settings.SetBooleanSetting("DoPremiered", ConfigScrapeOptions.bMainPremiered, , , Enums.ContentType.TVShow)
             settings.SetBooleanSetting("DoRating", ConfigScrapeOptions.bMainRating, , , Enums.ContentType.TVShow)
+            settings.SetBooleanSetting("DoRuntime", ConfigScrapeOptions.bMainRuntime, , , Enums.ContentType.TVShow)
             settings.SetBooleanSetting("DoStatus", ConfigScrapeOptions.bMainStatus, , , Enums.ContentType.TVShow)
             settings.SetBooleanSetting("DoStudio", ConfigScrapeOptions.bMainStudios, , , Enums.ContentType.TVShow)
             settings.SetBooleanSetting("DoTitle", ConfigScrapeOptions.bMainTitle, , , Enums.ContentType.TVShow)
+            settings.SetBooleanSetting("FallBackEn", _SpecialSettings.FallBackEng, , , Enums.ContentType.TV)
             settings.SetSetting("APIKey", _setup.txtApiKey.Text)
         End Using
     End Sub
@@ -216,6 +220,7 @@ Public Class TVDB_Data
         ConfigScrapeOptions.bMainStatus = _setup.chkScraperShowStatus.Checked
         ConfigScrapeOptions.bMainStudios = _setup.chkScraperShowStudios.Checked
         ConfigScrapeOptions.bMainTitle = _setup.chkScraperShowTitle.Checked
+        _SpecialSettings.FallBackEng = _setup.chkFallBackEng.Checked
         SaveSettings()
         If DoDispose Then
             RemoveHandler _setup.SetupScraperChanged, AddressOf Handle_SetupScraperChanged
@@ -237,6 +242,7 @@ Public Class TVDB_Data
 
         Dim Settings As New SpecialSettings
         Settings.APIKey = _SpecialSettings.APIKey
+        Settings.FallBackEng = _SpecialSettings.FallBackEng
         Settings.Language = oDBTV.Language_Main
 
         Dim nTVShow As MediaContainers.TVShow = Nothing
@@ -271,6 +277,7 @@ Public Class TVDB_Data
                     Return New Interfaces.ModuleResult_Data_TVShow With {.Result = Nothing}
             End Select
         Else
+            logger.Trace("[TVDB_Data] [Scraper_TV] [Done]")
             Return New Interfaces.ModuleResult_Data_TVShow With {.Result = nTVShow}
         End If
 
@@ -300,6 +307,7 @@ Public Class TVDB_Data
 
         Dim Settings As New SpecialSettings
         Settings.APIKey = _SpecialSettings.APIKey
+        Settings.FallBackEng = _SpecialSettings.FallBackEng
         Settings.Language = oDBTVEpisode.Language_Main
 
         Dim nTVEpisode As New MediaContainers.EpisodeDetails
@@ -338,6 +346,7 @@ Public Class TVDB_Data
 #Region "Fields"
 
         Dim APIKey As String
+        Dim FallBackEng As Boolean
         Dim Language As String
 
 #End Region 'Fields

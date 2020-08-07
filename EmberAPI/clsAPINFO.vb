@@ -69,6 +69,7 @@ Public Class NFO
         Dim new_Title As Boolean = False
         Dim new_Top250 As Boolean = False
         Dim new_Trailer As Boolean = False
+        Dim new_UserRating As Boolean = False
         Dim new_Year As Boolean = False
 
         'If "Use Preview Datascraperresults" option is enabled, a preview window which displays all datascraperresults will be opened before showing the Edit Movie page!
@@ -91,27 +92,16 @@ Public Class NFO
                 scrapedmovie.ActorsSpecified AndAlso Master.eSettings.MovieScraperCast AndAlso Not new_Actors Then
 
                 If Master.eSettings.MovieScraperCastWithImgOnly Then
-                    For i = scrapedmovie.Actors.Count - 1 To 0 Step -1
-                        If String.IsNullOrEmpty(scrapedmovie.Actors(i).URLOriginal) Then
-                            scrapedmovie.Actors.RemoveAt(i)
-                        End If
-                    Next
+                    FilterOnlyPersonsWithImage(scrapedmovie.Actors)
                 End If
 
-                If Master.eSettings.MovieScraperCastLimit > 0 AndAlso scrapedmovie.Actors.Count > Master.eSettings.MovieScraperCastLimit Then
-                    scrapedmovie.Actors.RemoveRange(Master.eSettings.MovieScraperCastLimit, scrapedmovie.Actors.Count - Master.eSettings.MovieScraperCastLimit)
-                End If
+                FilterCountLimit(Master.eSettings.MovieScraperCastLimit, scrapedmovie.Actors)
 
-                DBMovie.Movie.Actors = scrapedmovie.Actors
                 'added check if there's any actors left to add, if not then try with results of following scraper...
                 If scrapedmovie.ActorsSpecified Then
+                    ReorderPersons(scrapedmovie.Actors)
+                    DBMovie.Movie.Actors = scrapedmovie.Actors
                     new_Actors = True
-                    'add numbers for ordering
-                    Dim iOrder As Integer = 0
-                    For Each actor In scrapedmovie.Actors
-                        actor.Order = iOrder
-                        iOrder += 1
-                    Next
                 End If
 
             ElseIf Master.eSettings.MovieScraperCleanFields AndAlso Not Master.eSettings.MovieScraperCast AndAlso Not Master.eSettings.MovieLockActors Then
@@ -179,6 +169,9 @@ Public Class NFO
             'Countries
             If (Not DBMovie.Movie.CountriesSpecified OrElse Not Master.eSettings.MovieLockCountry) AndAlso ScrapeOptions.bMainCountries AndAlso
                 scrapedmovie.CountriesSpecified AndAlso Master.eSettings.MovieScraperCountry AndAlso Not new_Countries Then
+
+                FilterCountLimit(Master.eSettings.MovieScraperCountryLimit, scrapedmovie.Countries)
+
                 DBMovie.Movie.Countries = scrapedmovie.Countries
                 new_Countries = True
             ElseIf Master.eSettings.MovieScraperCleanFields AndAlso Not Master.eSettings.MovieScraperCountry AndAlso Not Master.eSettings.MovieLockCountry Then
@@ -200,9 +193,8 @@ Public Class NFO
 
                 StringUtils.GenreFilter(scrapedmovie.Genres)
 
-                If Master.eSettings.MovieScraperGenreLimit > 0 AndAlso Master.eSettings.MovieScraperGenreLimit < scrapedmovie.Genres.Count AndAlso scrapedmovie.Genres.Count > 0 Then
-                    scrapedmovie.Genres.RemoveRange(Master.eSettings.MovieScraperGenreLimit, scrapedmovie.Genres.Count - Master.eSettings.MovieScraperGenreLimit)
-                End If
+                FilterCountLimit(Master.eSettings.MovieScraperGenreLimit, scrapedmovie.Genres)
+
                 DBMovie.Movie.Genres = scrapedmovie.Genres
                 new_Genres = True
             ElseIf Master.eSettings.MovieScraperCleanFields AndAlso Not Master.eSettings.MovieScraperGenre AndAlso Not Master.eSettings.MovieLockGenre Then
@@ -289,17 +281,13 @@ Public Class NFO
                     Next
                 End If
 
-                If Master.eSettings.MovieScraperStudioLimit > 0 AndAlso Master.eSettings.MovieScraperStudioLimit < _studios.Count AndAlso _studios.Count > 0 Then
-                    _studios.RemoveRange(Master.eSettings.MovieScraperStudioLimit, _studios.Count - Master.eSettings.MovieScraperStudioLimit)
-                End If
-
+                FilterCountLimit(Master.eSettings.MovieScraperStudioLimit, _studios)
 
                 DBMovie.Movie.Studios.AddRange(_studios)
                 'added check if there's any studios left to add, if not then try with results of following scraper...
                 If _studios.Count > 0 Then
                     new_Studio = True
                 End If
-
 
             ElseIf Master.eSettings.MovieScraperCleanFields AndAlso Not Master.eSettings.MovieScraperStudio AndAlso Not Master.eSettings.MovieLockStudio Then
                 DBMovie.Movie.Studios.Clear()
@@ -335,7 +323,7 @@ Public Class NFO
             'Trailer
             If (Not DBMovie.Movie.TrailerSpecified OrElse Not Master.eSettings.MovieLockTrailer) AndAlso ScrapeOptions.bMainTrailer AndAlso
                 scrapedmovie.TrailerSpecified AndAlso Master.eSettings.MovieScraperTrailer AndAlso Not new_Trailer Then
-                If Master.eSettings.MovieScraperXBMCTrailerFormat AndAlso YouTube.UrlUtils.IsYouTubeURL(scrapedmovie.Trailer) Then
+                If Master.eSettings.MovieScraperXBMCTrailerFormat AndAlso YouTube.UrlUtils.IsYouTubeUrl(scrapedmovie.Trailer) Then
                     DBMovie.Movie.Trailer = StringUtils.ConvertFromYouTubeURLToKodiTrailerFormat(scrapedmovie.Trailer)
                 Else
                     DBMovie.Movie.Trailer = scrapedmovie.Trailer
@@ -343,6 +331,15 @@ Public Class NFO
                 new_Trailer = True
             ElseIf Master.eSettings.MovieScraperCleanFields AndAlso Not Master.eSettings.MovieScraperTrailer AndAlso Not Master.eSettings.MovieLockTrailer Then
                 DBMovie.Movie.Trailer = String.Empty
+            End If
+
+            'User Rating
+            If (Not DBMovie.Movie.UserRatingSpecified OrElse Not Master.eSettings.MovieLockUserRating) AndAlso ScrapeOptions.bMainUserRating AndAlso
+                scrapedmovie.UserRatingSpecified AndAlso Master.eSettings.MovieScraperUserRating AndAlso Not new_UserRating Then
+                DBMovie.Movie.UserRating = scrapedmovie.UserRating
+                new_UserRating = True
+            ElseIf Master.eSettings.MovieScraperCleanFields AndAlso Not Master.eSettings.MovieScraperUserRating AndAlso Not Master.eSettings.MovieLockUserRating Then
+                DBMovie.Movie.UserRating = 0
             End If
 
             'Year
@@ -365,6 +362,21 @@ Public Class NFO
 
         Next
 
+        'UniqueIDs
+        DBMovie.Movie.UniqueIDs.Clear()
+        If DBMovie.Movie.IMDBSpecified Then
+            DBMovie.Movie.UniqueIDs.Add(New MediaContainers.Uniqueid With {
+                                        .IsDefault = True,
+                                        .Type = "imdb",
+                                        .Value = DBMovie.Movie.IMDB})
+        End If
+        If DBMovie.Movie.TMDBSpecified Then
+            DBMovie.Movie.UniqueIDs.Add(New MediaContainers.Uniqueid With {
+                                        .IsDefault = False,
+                                        .Type = "tmdb",
+                                        .Value = DBMovie.Movie.TMDB})
+        End If
+
         'Certification for MPAA
         If DBMovie.Movie.CertificationsSpecified AndAlso Master.eSettings.MovieScraperCertForMPAA AndAlso
             (Not Master.eSettings.MovieScraperCertForMPAAFallback AndAlso (Not DBMovie.Movie.MPAASpecified OrElse Not Master.eSettings.MovieLockMPAA) OrElse
@@ -381,6 +393,11 @@ Public Class NFO
         'MPAA value if MPAA is not available
         If Not DBMovie.Movie.MPAASpecified AndAlso Not String.IsNullOrEmpty(Master.eSettings.MovieScraperMPAANotRated) Then
             DBMovie.Movie.MPAA = Master.eSettings.MovieScraperMPAANotRated
+        End If
+
+        'OriginalTitle as Title
+        If (Not DBMovie.Movie.TitleSpecified OrElse Not Master.eSettings.MovieLockTitle) AndAlso Master.eSettings.MovieScraperOriginalTitleAsTitle AndAlso DBMovie.Movie.OriginalTitleSpecified Then
+            DBMovie.Movie.Title = DBMovie.Movie.OriginalTitle
         End If
 
         'Plot for Outline
@@ -495,6 +512,7 @@ Public Class NFO
         Dim new_Title As Boolean = False
         Dim new_OriginalTitle As Boolean = False
         Dim new_Trailer As Boolean = False
+        Dim new_UserRating As Boolean = False
 
         Dim KnownEpisodesIndex As New List(Of KnownEpisode)
         Dim KnownSeasonsIndex As New List(Of Integer)
@@ -521,30 +539,16 @@ Public Class NFO
             If (Not DBTV.TVShow.ActorsSpecified OrElse Not Master.eSettings.TVLockShowActors) AndAlso ScrapeOptions.bMainActors AndAlso
                 scrapedshow.ActorsSpecified AndAlso Master.eSettings.TVScraperShowActors AndAlso Not new_Actors Then
 
-                'If Master.eSettings.MovieScraperCastWithImgOnly Then
-                '    For i = scrapedmovie.Actors.Count - 1 To 0 Step -1
-                '        If String.IsNullOrEmpty(scrapedmovie.Actors(i).ThumbURL) Then
-                '            scrapedmovie.Actors.RemoveAt(i)
-                '        End If
-                '    Next
-                'End If
-
-                'If Master.eSettings.MovieScraperCastLimit > 0 AndAlso scrapedmovie.Actors.Count > Master.eSettings.MovieScraperCastLimit Then
-                '    scrapedmovie.Actors.RemoveRange(Master.eSettings.MovieScraperCastLimit, scrapedmovie.Actors.Count - Master.eSettings.MovieScraperCastLimit)
-                'End If
-
-                DBTV.TVShow.Actors = scrapedshow.Actors
+                If Master.eSettings.TVScraperCastWithImgOnly Then
+                    FilterOnlyPersonsWithImage(scrapedshow.Actors)
+                End If
+                FilterCountLimit(Master.eSettings.TVScraperShowActorsLimit, scrapedshow.Actors)
                 'added check if there's any actors left to add, if not then try with results of following scraper...
                 If scrapedshow.ActorsSpecified Then
+                    ReorderPersons(scrapedshow.Actors)
+                    DBTV.TVShow.Actors = scrapedshow.Actors
                     new_Actors = True
-                    'add numbers for ordering
-                    Dim iOrder As Integer = 0
-                    For Each actor In scrapedshow.Actors
-                        actor.Order = iOrder
-                        iOrder += 1
-                    Next
                 End If
-
             ElseIf Master.eSettings.TVScraperCleanFields AndAlso Not Master.eSettings.TVScraperShowActors AndAlso Not Master.eSettings.TVLockShowActors Then
                 DBTV.TVShow.Actors.Clear()
             End If
@@ -578,6 +582,7 @@ Public Class NFO
             If (Not DBTV.TVShow.CreatorsSpecified OrElse Not Master.eSettings.TVLockShowCreators) AndAlso ScrapeOptions.bMainCreators AndAlso
                 scrapedshow.CreatorsSpecified AndAlso Master.eSettings.TVScraperShowCreators AndAlso Not new_Creators Then
                 DBTV.TVShow.Creators = scrapedshow.Creators
+                new_Creators = True
             ElseIf Master.eSettings.TVScraperCleanFields AndAlso Not Master.eSettings.TVScraperShowCreators AndAlso Not Master.eSettings.TVLockShowCreators Then
                 DBTV.TVShow.Creators.Clear()
             End If
@@ -585,6 +590,8 @@ Public Class NFO
             'Countries
             If (Not DBTV.TVShow.CountriesSpecified OrElse Not Master.eSettings.TVLockShowCountry) AndAlso ScrapeOptions.bMainCountries AndAlso
                 scrapedshow.CountriesSpecified AndAlso Master.eSettings.TVScraperShowCountry AndAlso Not new_ShowCountries Then
+
+                FilterCountLimit(Master.eSettings.TVScraperShowCountryLimit, scrapedshow.Countries)
                 DBTV.TVShow.Countries = scrapedshow.Countries
                 new_ShowCountries = True
             ElseIf Master.eSettings.TVScraperCleanFields AndAlso Not Master.eSettings.TVScraperShowCountry AndAlso Not Master.eSettings.TVLockShowCountry Then
@@ -603,10 +610,7 @@ Public Class NFO
                 scrapedshow.GenresSpecified AndAlso Master.eSettings.TVScraperShowGenre AndAlso Not new_Genres Then
 
                 StringUtils.GenreFilter(scrapedshow.Genres)
-
-                'If Master.eSettings.TVScraperShowGenreLimit > 0 AndAlso Master.eSettings.TVScraperShowGenreLimit < _genres.Count AndAlso _genres.Count > 0 Then
-                '    _genres.RemoveRange(Master.eSettings.TVScraperShowGenreLimit, _genres.Count - Master.eSettings.TVScraperShowGenreLimit)
-                'End If
+                FilterCountLimit(Master.eSettings.TVScraperShowGenreLimit, scrapedshow.Genres)
                 DBTV.TVShow.Genres = scrapedshow.Genres
                 new_Genres = True
             ElseIf Master.eSettings.TVScraperCleanFields AndAlso Not Master.eSettings.TVScraperShowGenre AndAlso Not Master.eSettings.TVLockShowGenre Then
@@ -661,13 +665,14 @@ Public Class NFO
             End If
 
             'Runtime
-            If (Not DBTV.TVShow.RuntimeSpecified OrElse DBTV.TVShow.Runtime = "0" OrElse Not Master.eSettings.TVLockShowRuntime) AndAlso ScrapeOptions.bMainRuntime AndAlso
-                scrapedshow.RuntimeSpecified AndAlso Not scrapedshow.Runtime = "0" AndAlso Master.eSettings.TVScraperShowRuntime AndAlso Not new_Runtime Then
+            If (Not DBTV.TVShow.RuntimeSpecified OrElse Not Master.eSettings.TVLockShowRuntime) AndAlso ScrapeOptions.bMainRuntime AndAlso
+                scrapedshow.RuntimeSpecified AndAlso Master.eSettings.TVScraperShowRuntime AndAlso Not new_Runtime Then
                 DBTV.TVShow.Runtime = scrapedshow.Runtime
                 new_Runtime = True
             ElseIf Master.eSettings.TVScraperCleanFields AndAlso Not Master.eSettings.TVScraperShowRuntime AndAlso Not Master.eSettings.TVLockShowRuntime Then
                 DBTV.TVShow.Runtime = String.Empty
             End If
+
 
             'Status
             If (DBTV.TVShow.StatusSpecified OrElse Not Master.eSettings.TVLockShowStatus) AndAlso ScrapeOptions.bMainStatus AndAlso
@@ -681,31 +686,10 @@ Public Class NFO
             'Studios
             If (Not DBTV.TVShow.StudiosSpecified OrElse Not Master.eSettings.TVLockShowStudio) AndAlso ScrapeOptions.bMainStudios AndAlso
                 scrapedshow.StudiosSpecified AndAlso Master.eSettings.TVScraperShowStudio AndAlso Not new_Studio Then
-                DBTV.TVShow.Studios.Clear()
 
-                Dim _studios As New List(Of String)
-                _studios.AddRange(scrapedshow.Studios)
-
-                'If Master.eSettings.TVScraperShowStudioWithImgOnly Then
-                '    For i = _studios.Count - 1 To 0 Step -1
-                '        If APIXML.dStudios.ContainsKey(_studios.Item(i).ToLower) = False Then
-                '            _studios.RemoveAt(i)
-                '        End If
-                '    Next
-                'End If
-
-                'If Master.eSettings.tvScraperStudioLimit > 0 AndAlso Master.eSettings.MovieScraperStudioLimit < _studios.Count AndAlso _studios.Count > 0 Then
-                '    _studios.RemoveRange(Master.eSettings.MovieScraperStudioLimit, _studios.Count - Master.eSettings.MovieScraperStudioLimit)
-                'End If
-
-
-                DBTV.TVShow.Studios.AddRange(_studios)
-                'added check if there's any studios left to add, if not then try with results of following scraper...
-                If _studios.Count > 0 Then
-                    new_Studio = True
-                End If
-
-
+                FilterCountLimit(Master.eSettings.TVScraperShowStudioLimit, scrapedshow.Studios)
+                DBTV.TVShow.Studios = scrapedshow.Studios
+                new_Studio = True
             ElseIf Master.eSettings.TVScraperCleanFields AndAlso Not Master.eSettings.TVScraperShowStudio AndAlso Not Master.eSettings.TVLockShowStudio Then
                 DBTV.TVShow.Studios.Clear()
             End If
@@ -719,15 +703,14 @@ Public Class NFO
                 DBTV.TVShow.Title = String.Empty
             End If
 
-            '    'Credits
-            '    If (DBTV.Movie.Credits.Count < 1 OrElse Not Master.eSettings.MovieLockCredits) AndAlso _
-            '        scrapedmovie.Credits.Count > 0 AndAlso Master.eSettings.MovieScraperCredits AndAlso Not new_Credits Then
-            '        DBTV.Movie.Credits.Clear()
-            '        DBTV.Movie.Credits.AddRange(scrapedmovie.Credits)
-            '        new_Credits = True
-            '    ElseIf Master.eSettings.MovieScraperCleanFields AndAlso Not Master.eSettings.MovieScraperCredits AndAlso Not Master.eSettings.MovieLockCredits Then
-            '        DBTV.Movie.Credits.Clear()
-            '    End If
+            'User Rating
+            If (Not DBTV.TVShow.UserRatingSpecified OrElse Not Master.eSettings.TVLockShowUserRating) AndAlso ScrapeOptions.bMainUserRating AndAlso
+                scrapedshow.UserRatingSpecified AndAlso Master.eSettings.TVScraperShowUserRating AndAlso Not new_UserRating Then
+                DBTV.TVShow.UserRating = scrapedshow.UserRating
+                new_UserRating = True
+            ElseIf Master.eSettings.TVScraperCleanFields AndAlso Not Master.eSettings.TVScraperShowUserRating AndAlso Not Master.eSettings.TVLockShowUserRating Then
+                DBTV.TVShow.UserRating = 0
+            End If
 
             'Create KnowSeasons index
             For Each kSeason As MediaContainers.SeasonDetails In scrapedshow.KnownSeasons
@@ -765,6 +748,27 @@ Public Class NFO
             End If
         Next
 
+        'UniqueIDs
+        DBTV.TVShow.UniqueIDs.Clear()
+        If DBTV.TVShow.TVDBSpecified Then
+            DBTV.TVShow.UniqueIDs.Add(New MediaContainers.Uniqueid With {
+                                        .IsDefault = True,
+                                        .Type = "tvdb",
+                                        .Value = DBTV.TVShow.TVDB})
+        End If
+        If DBTV.TVShow.IMDBSpecified Then
+            DBTV.TVShow.UniqueIDs.Add(New MediaContainers.Uniqueid With {
+                                        .IsDefault = False,
+                                        .Type = "imdb",
+                                        .Value = DBTV.TVShow.IMDB})
+        End If
+        If DBTV.TVShow.TMDBSpecified Then
+            DBTV.TVShow.UniqueIDs.Add(New MediaContainers.Uniqueid With {
+                                        .IsDefault = False,
+                                        .Type = "tmdb",
+                                        .Value = DBTV.TVShow.TMDB})
+        End If
+
         'Certification for MPAA
         If DBTV.TVShow.CertificationsSpecified AndAlso Master.eSettings.TVScraperShowCertForMPAA AndAlso
             (Not Master.eSettings.MovieScraperCertForMPAAFallback AndAlso (Not DBTV.TVShow.MPAASpecified OrElse Not Master.eSettings.TVLockShowMPAA) OrElse
@@ -781,6 +785,11 @@ Public Class NFO
         'MPAA value if MPAA is not available
         If Not DBTV.TVShow.MPAASpecified AndAlso Not String.IsNullOrEmpty(Master.eSettings.TVScraperShowMPAANotRated) Then
             DBTV.TVShow.MPAA = Master.eSettings.TVScraperShowMPAANotRated
+        End If
+
+        'OriginalTitle as Title
+        If (Not DBTV.TVShow.TitleSpecified OrElse Not Master.eSettings.TVLockShowTitle) AndAlso Master.eSettings.TVScraperShowOriginalTitleAsTitle AndAlso DBTV.TVShow.OriginalTitleSpecified Then
+            DBTV.TVShow.Title = DBTV.TVShow.OriginalTitle
         End If
 
         'set ListTitle at the end of merging
@@ -891,10 +900,10 @@ Public Class NFO
         End If
 
         'create the "* All Seasons" entry if needed
-        Dim tmpAllSeasons As Database.DBElement = DBTV.Seasons.FirstOrDefault(Function(f) f.TVSeason.Season = 999)
+        Dim tmpAllSeasons As Database.DBElement = DBTV.Seasons.FirstOrDefault(Function(f) f.TVSeason.IsAllSeasons)
         If tmpAllSeasons Is Nothing OrElse tmpAllSeasons.TVSeason Is Nothing Then
             tmpAllSeasons = New Database.DBElement(Enums.ContentType.TVSeason)
-            tmpAllSeasons.TVSeason = New MediaContainers.SeasonDetails With {.Season = 999}
+            tmpAllSeasons.TVSeason = New MediaContainers.SeasonDetails With {.Season = -1}
             tmpAllSeasons = Master.DB.AddTVShowInfoToDBElement(tmpAllSeasons, DBTV)
             DBTV.Seasons.Add(tmpAllSeasons)
         End If
@@ -903,7 +912,7 @@ Public Class NFO
         Dim iIndex As Integer = 0
         While iIndex <= DBTV.Seasons.Count - 1
             Dim iSeason As Integer = DBTV.Seasons.Item(iIndex).TVSeason.Season
-            If Not iSeason = 999 AndAlso DBTV.Episodes.Where(Function(f) f.TVEpisode.Season = iSeason).Count = 0 Then
+            If Not iSeason = -1 AndAlso DBTV.Episodes.Where(Function(f) f.TVEpisode.Season = iSeason).Count = 0 Then
                 DBTV.Seasons.RemoveAt(iIndex)
             Else
                 iIndex += 1
@@ -995,6 +1004,7 @@ Public Class NFO
         Dim new_Season As Boolean = False
         Dim new_ThumbPoster As Boolean = False
         Dim new_Title As Boolean = False
+        Dim new_UserRating As Boolean = False
 
         ''If "Use Preview Datascraperresults" option is enabled, a preview window which displays all datascraperresults will be opened before showing the Edit Movie page!
         'If (ScrapeType = Enums.ScrapeType_Movie_MovieSet_TV.SingleScrape OrElse ScrapeType = Enums.ScrapeType_Movie_MovieSet_TV.SingleField) AndAlso Master.eSettings.MovieScraperUseDetailView AndAlso ScrapedList.Count > 0 Then
@@ -1028,28 +1038,15 @@ Public Class NFO
             If (Not DBTVEpisode.TVEpisode.ActorsSpecified OrElse Not Master.eSettings.TVLockEpisodeActors) AndAlso ScrapeOptions.bEpisodeActors AndAlso
                 scrapedepisode.ActorsSpecified AndAlso Master.eSettings.TVScraperEpisodeActors AndAlso Not new_Actors Then
 
-                'If Master.eSettings.TVScraperEpisodeCastWithImgOnly Then
-                '    For i = scrapedepisode.Actors.Count - 1 To 0 Step -1
-                '        If String.IsNullOrEmpty(scrapedepisode.Actors(i).ThumbURL) Then
-                '            scrapedepisode.Actors.RemoveAt(i)
-                '        End If
-                '    Next
-                'End If
-
-                'If Master.eSettings.TVScraperEpisodeCastLimit > 0 AndAlso scrapedepisode.Actors.Count > Master.eSettings.TVScraperEpisodeCastLimit Then
-                '    scrapedepisode.Actors.RemoveRange(Master.eSettings.TVScraperEpisodeCastLimit, scrapedepisode.Actors.Count - Master.eSettings.TVScraperEpisodeCastLimit)
-                'End If
-
-                DBTVEpisode.TVEpisode.Actors = scrapedepisode.Actors
+                If Master.eSettings.TVScraperCastWithImgOnly Then
+                    FilterOnlyPersonsWithImage(scrapedepisode.Actors)
+                End If
+                FilterCountLimit(Master.eSettings.TVScraperEpisodeActorsLimit, scrapedepisode.Actors)
                 'added check if there's any actors left to add, if not then try with results of following scraper...
                 If scrapedepisode.ActorsSpecified Then
+                    ReorderPersons(scrapedepisode.Actors)
+                    DBTVEpisode.TVEpisode.Actors = scrapedepisode.Actors
                     new_Actors = True
-                    'add numbers for ordering
-                    Dim iOrder As Integer = 0
-                    For Each actor In scrapedepisode.Actors
-                        actor.Order = iOrder
-                        iOrder += 1
-                    Next
                 End If
 
             ElseIf Master.eSettings.TVScraperCleanFields AndAlso Not Master.eSettings.TVScraperEpisodeActors AndAlso Not Master.eSettings.TVLockEpisodeActors Then
@@ -1087,30 +1084,16 @@ Public Class NFO
             If (Not DBTVEpisode.TVEpisode.GuestStarsSpecified OrElse Not Master.eSettings.TVLockEpisodeGuestStars) AndAlso ScrapeOptions.bEpisodeGuestStars AndAlso
                 scrapedepisode.GuestStarsSpecified AndAlso Master.eSettings.TVScraperEpisodeGuestStars AndAlso Not new_GuestStars Then
 
-                'If Master.eSettings.TVScraperEpisodeCastWithImgOnly Then
-                '    For i = scrapedepisode.Actors.Count - 1 To 0 Step -1
-                '        If String.IsNullOrEmpty(scrapedepisode.Actors(i).ThumbURL) Then
-                '            scrapedepisode.Actors.RemoveAt(i)
-                '        End If
-                '    Next
-                'End If
-
-                'If Master.eSettings.TVScraperEpisodeCastLimit > 0 AndAlso scrapedepisode.Actors.Count > Master.eSettings.TVScraperEpisodeCastLimit Then
-                '    scrapedepisode.Actors.RemoveRange(Master.eSettings.TVScraperEpisodeCastLimit, scrapedepisode.Actors.Count - Master.eSettings.TVScraperEpisodeCastLimit)
-                'End If
-
-                DBTVEpisode.TVEpisode.GuestStars = scrapedepisode.GuestStars
+                If Master.eSettings.TVScraperCastWithImgOnly Then
+                    FilterOnlyPersonsWithImage(scrapedepisode.GuestStars)
+                End If
+                FilterCountLimit(Master.eSettings.TVScraperEpisodeGuestStarsLimit, scrapedepisode.GuestStars)
                 'added check if there's any actors left to add, if not then try with results of following scraper...
                 If scrapedepisode.GuestStarsSpecified Then
+                    ReorderPersons(scrapedepisode.GuestStars)
+                    DBTVEpisode.TVEpisode.GuestStars = scrapedepisode.GuestStars
                     new_GuestStars = True
-                    'add numbers for ordering
-                    Dim iOrder As Integer = 0
-                    For Each aGuestStar In scrapedepisode.GuestStars
-                        aGuestStar.Order = iOrder
-                        iOrder += 1
-                    Next
                 End If
-
             ElseIf Master.eSettings.TVScraperCleanFields AndAlso Not Master.eSettings.TVScraperEpisodeGuestStars AndAlso Not Master.eSettings.TVLockEpisodeGuestStars Then
                 DBTVEpisode.TVEpisode.GuestStars.Clear()
             End If
@@ -1133,6 +1116,15 @@ Public Class NFO
             ElseIf Master.eSettings.TVScraperCleanFields AndAlso Not Master.eSettings.TVScraperEpisodeRating AndAlso Not Master.eSettings.TVLockEpisodeRating Then
                 DBTVEpisode.TVEpisode.Rating = String.Empty
                 DBTVEpisode.TVEpisode.Votes = String.Empty
+            End If
+
+            'User Rating
+            If (Not DBTVEpisode.TVEpisode.UserRatingSpecified OrElse Not Master.eSettings.TVLockEpisodeUserRating) AndAlso ScrapeOptions.bEpisodeUserRating AndAlso
+                scrapedepisode.UserRatingSpecified AndAlso Master.eSettings.TVScraperEpisodeUserRating AndAlso Not new_UserRating Then
+                DBTVEpisode.TVEpisode.UserRating = scrapedepisode.UserRating
+                new_UserRating = True
+            ElseIf Master.eSettings.TVScraperCleanFields AndAlso Not Master.eSettings.TVScraperEpisodeUserRating AndAlso Not Master.eSettings.TVLockEpisodeUserRating Then
+                DBTVEpisode.TVEpisode.UserRating = 0
             End If
 
             'Runtime
@@ -1160,9 +1152,36 @@ Public Class NFO
             End If
         Next
 
+        'UniqueIDs
+        DBTVEpisode.TVEpisode.UniqueIDs.Clear()
+        If DBTVEpisode.TVEpisode.TVDBSpecified Then
+            DBTVEpisode.TVEpisode.UniqueIDs.Add(New MediaContainers.Uniqueid With {
+                                        .IsDefault = True,
+                                        .Type = "tvdb",
+                                        .Value = DBTVEpisode.TVEpisode.TVDB})
+        End If
+        If DBTVEpisode.TVEpisode.IMDBSpecified Then
+            DBTVEpisode.TVEpisode.UniqueIDs.Add(New MediaContainers.Uniqueid With {
+                                        .IsDefault = False,
+                                        .Type = "imdb",
+                                        .Value = DBTVEpisode.TVEpisode.IMDB})
+        End If
+        If DBTVEpisode.TVEpisode.TMDBSpecified Then
+            DBTVEpisode.TVEpisode.UniqueIDs.Add(New MediaContainers.Uniqueid With {
+                                        .IsDefault = False,
+                                        .Type = "tmdb",
+                                        .Value = DBTVEpisode.TVEpisode.TMDB})
+        End If
+
         'Add GuestStars to Actors
         If DBTVEpisode.TVEpisode.GuestStarsSpecified AndAlso Master.eSettings.TVScraperEpisodeGuestStarsToActors AndAlso Not Master.eSettings.TVLockEpisodeActors Then
             DBTVEpisode.TVEpisode.Actors.AddRange(DBTVEpisode.TVEpisode.GuestStars)
+
+            'run the limit filter again
+            FilterCountLimit(Master.eSettings.TVScraperEpisodeActorsLimit, DBTVEpisode.TVEpisode.Actors)
+
+            'reorder again
+            ReorderPersons(DBTVEpisode.TVEpisode.Actors)
         End If
 
         'TV Show Runtime for Episode Runtime
@@ -1388,6 +1407,24 @@ Public Class NFO
         Catch ex As Exception
             logger.Error(ex, New StackFrame().GetMethod().Name & Convert.ToChar(Windows.Forms.Keys.Tab) & "<" & DBMovieSet.Filename & ">")
         End Try
+    End Sub
+
+    Private Shared Sub FilterOnlyPersonsWithImage(ByRef lstPerson As List(Of MediaContainers.Person))
+        If lstPerson IsNot Nothing Then
+            lstPerson = lstPerson.Where(Function(f) f.URLOriginalSpecified).ToList
+        End If
+    End Sub
+
+    Private Shared Sub FilterCountLimit(ByVal iLimit As Integer, ByRef lstPerson As List(Of MediaContainers.Person))
+        If Not iLimit = 0 AndAlso iLimit < lstPerson.Count Then
+            lstPerson.RemoveRange(iLimit, lstPerson.Count - iLimit)
+        End If
+    End Sub
+
+    Private Shared Sub FilterCountLimit(ByVal iLimit As Integer, ByRef lstString As List(Of String))
+        If Not iLimit = 0 AndAlso iLimit < lstString.Count Then
+            lstString.RemoveRange(iLimit, lstString.Count - iLimit)
+        End If
     End Sub
 
     Public Shared Function FIToString(ByVal miFI As MediaContainers.Fileinfo, ByVal isTV As Boolean) As String
@@ -1714,82 +1751,90 @@ Public Class NFO
     ''' <param name="fiRes"></param>
     ''' <returns></returns>
     Public Shared Function GetResFromDimensions(ByVal fiRes As MediaContainers.Video) As String
+        Dim iWidth As Integer
+        Dim iHeight As Integer
         Dim resOut As String = String.Empty
-        Try
-            If Not String.IsNullOrEmpty(fiRes.Width) AndAlso Not String.IsNullOrEmpty(fiRes.Height) AndAlso Not String.IsNullOrEmpty(fiRes.Aspect) Then
-                Dim iWidth As Integer = Convert.ToInt32(fiRes.Width)
-                Dim iHeight As Integer = Convert.ToInt32(fiRes.Height)
-                Dim sinADR As Single = NumUtils.ConvertToSingle(fiRes.Aspect)
 
-                Select Case True
-                    Case iWidth < 640
-                        resOut = "SD"
+        If Integer.TryParse(fiRes.Width, iWidth) AndAlso Integer.TryParse(fiRes.Height, iHeight) Then
+            Select Case True
                     'exact
-                    Case (iWidth = 3840 AndAlso iHeight = 2160) OrElse (iWidth = 3996 AndAlso iHeight = 2160) OrElse (iWidth = 4096 AndAlso iHeight = 2160) OrElse (iWidth = 5120 AndAlso iHeight = 2160)
-                        resOut = "2160"
-                    Case (iWidth = 2560 AndAlso iHeight = 1440)
-                        resOut = "1440"
-                    Case (iWidth = 1920 AndAlso (iHeight = 1080 OrElse iHeight = 800)) OrElse (iWidth = 1440 AndAlso iHeight = 1080) OrElse (iWidth = 1280 AndAlso iHeight = 1080)
-                        resOut = "1080"
-                    Case (iWidth = 1366 AndAlso iHeight = 768) OrElse (iWidth = 1024 AndAlso iHeight = 768)
-                        resOut = "768"
-                    Case (iWidth = 960 AndAlso iHeight = 720) OrElse (iWidth = 1280 AndAlso (iHeight = 720 OrElse iHeight = 544))
-                        resOut = "720"
-                    Case (iWidth = 1024 AndAlso iHeight = 576) OrElse (iWidth = 720 AndAlso iHeight = 576)
-                        resOut = "576"
-                    Case (iWidth = 720 OrElse iWidth = 960) AndAlso iHeight = 540
-                        resOut = "540"
-                    Case (iWidth = 852 OrElse iWidth = 720 OrElse iWidth = 704 OrElse iWidth = 640) AndAlso iHeight = 480
-                        resOut = "480"
-                    'by ADR
-                    Case sinADR >= 1.4 AndAlso iWidth = 3840
-                        resOut = "2160"
-                    Case sinADR >= 1.4 AndAlso iWidth = 2560
-                        resOut = "1440"
-                    Case sinADR >= 1.4 AndAlso iWidth = 1920
-                        resOut = "1080"
-                    Case sinADR >= 1.4 AndAlso iWidth = 1366
-                        resOut = "768"
-                    Case sinADR >= 1.4 AndAlso iWidth = 1280
-                        resOut = "720"
-                    Case sinADR >= 1.4 AndAlso iWidth = 1024
-                        resOut = "576"
-                    Case sinADR >= 1.4 AndAlso iWidth = 960
-                        resOut = "540"
-                    Case sinADR >= 1.4 AndAlso iWidth = 852
-                        resOut = "480"
-                    'loose
-                    Case iWidth > 2560 AndAlso iHeight > 1440
-                        resOut = "2160"
-                    Case iWidth > 1920 AndAlso iHeight > 1080
-                        resOut = "1440"
-                    Case iWidth >= 1200 AndAlso iHeight > 768
-                        resOut = "1080"
-                    Case iWidth >= 1000 AndAlso iHeight > 720
-                        resOut = "768"
-                    Case iWidth >= 1000 AndAlso iHeight > 500
-                        resOut = "720"
-                    Case iWidth >= 700 AndAlso iHeight > 540
-                        resOut = "576"
-                    Case iWidth >= 700 AndAlso iHeight > 480
-                        resOut = "540"
-                    Case Else
-                        resOut = "480"
-                End Select
-            End If
-        Catch ex As Exception
-            logger.Error(ex, New StackFrame().GetMethod().Name)
-        End Try
+                Case iWidth = 7680 AndAlso iHeight = 4320   'UHD 8K
+                    resOut = "4320"
+                Case iWidth = 4096 AndAlso iHeight = 2160   'UHD 4K (cinema)
+                    resOut = "2160"
+                Case iWidth = 3840 AndAlso iHeight = 2160   'UHD 4K
+                    resOut = "2160"
+                Case iWidth = 2560 AndAlso iHeight = 1600   'WQXGA (16:10)
+                    resOut = "1600"
+                Case iWidth = 2560 AndAlso iHeight = 1440   'WQHD (16:9)
+                    resOut = "1440"
+                Case iWidth = 1920 AndAlso iHeight = 1200   'WUXGA (16:10)
+                    resOut = "1200"
+                Case iWidth = 1920 AndAlso iHeight = 1080   'HD1080 (16:9)
+                    resOut = "1080"
+                Case iWidth = 1680 AndAlso iHeight = 1050   'WSXGA+ (16:10)
+                    resOut = "1050"
+                Case iWidth = 1600 AndAlso iHeight = 900    'HD+ (16:9)
+                    resOut = "900"
+                Case iWidth = 1280 AndAlso iHeight = 720    'HD720 / WXGA (16:9)
+                    resOut = "720"
+                Case iWidth = 800 AndAlso iHeight = 480     'Rec. 601 plus a quarter (5:3)
+                    resOut = "480"
+                Case iWidth = 768 AndAlso iHeight = 576     'PAL
+                    resOut = "576"
+                Case iWidth = 720 AndAlso iHeight = 480     'Rec. 601 (3:2)
+                    resOut = "480"
+                Case iWidth = 720 AndAlso iHeight = 576     'PAL (DVD)
+                    resOut = "576"
+                Case iWidth = 720 AndAlso iHeight = 540     'half of 1080p (16:9)
+                    resOut = "540"
+                Case iWidth = 640 AndAlso iHeight = 480     'VGA (4:3)
+                    resOut = "480"
+                Case iWidth = 640 AndAlso iHeight = 360     'Wide 360p (16:9)
+                    resOut = "360"
+                Case iWidth = 480 AndAlso iHeight = 360     '360p (4:3, uncommon)
+                    resOut = "360"
+                Case iWidth = 426 AndAlso iHeight = 240     'NTSC widescreen (16:9)
+                    resOut = "240"
+                Case iWidth = 352 AndAlso iHeight = 240     'NTSC-standard VCD / super-long-play DVD (4:3)
+                    resOut = "240"
+                Case iWidth = 320 AndAlso iHeight = 240     'CGA / NTSC square pixel (4:3)
+                    resOut = "240"
+                Case iWidth = 256 AndAlso iHeight = 144     'One tenth of 1440p (16:9)
+                    resOut = "144"
+                Case Else
+                    '
+                    ' MAM: simple version, totally sufficient. Add new res at the end of the list if they become available (before "99999999" of course!)
+                    ' Warning: this list needs to be sorted from lowest to highes resolution, else the search routine will go nuts!
+                    '
+                    Dim aVres() = New Dictionary(Of Integer, String) From
+                        {
+                        {426, "240"},
+                        {480, "360"},
+                        {640, "480"},
+                        {720, "576"},
+                        {1280, "720"},
+                        {1920, "1080"},
+                        {4096, "2160"},
+                        {7680, "4320"},
+                        {99999999, String.Empty}
+                    }.ToArray
+                    '
+                    ' search appropriate horizontal resolution
+                    ' Note: Array's last entry must be a ridiculous high number, else this loop will surely crash!
+                    '
+                    Dim i As Integer
+                    While (aVres(i).Key < iWidth)
+                        i = i + 1
+                    End While
+                    resOut = aVres(i).Value
+            End Select
 
-        If Not String.IsNullOrEmpty(resOut) Then
-            If String.IsNullOrEmpty(fiRes.Scantype) Then
-                Return String.Concat(resOut)
-            Else
+            If Not String.IsNullOrEmpty(resOut) AndAlso Not String.IsNullOrEmpty(fiRes.Scantype) Then
                 Return String.Concat(resOut, If(fiRes.Scantype.ToLower = "progressive", "p", "i"))
             End If
-        Else
-            Return String.Empty
         End If
+        Return resOut
     End Function
 
     Public Shared Function IsConformingNFO_Movie(ByVal sPath As String) As Boolean
@@ -1969,55 +2014,11 @@ Public Class NFO
                         xmlMovSet = DirectCast(xmlSer.Deserialize(xmlSR), MediaContainers.MovieSet)
                         xmlMovSet.Plot = xmlMovSet.Plot.Replace(vbCrLf, vbLf).Replace(vbLf, vbCrLf)
                     End Using
-                    'Else
-                    '    If Not String.IsNullOrEmpty(sPath) Then
-                    '        Dim sReturn As New NonConf
-                    '        sReturn = GetIMDBFromNonConf(sPath, isSingle)
-                    '        xmlMov.IMDBID = sReturn.IMDBID
-                    '        Try
-                    '            If Not String.IsNullOrEmpty(sReturn.Text) Then
-                    '                Using xmlSTR As StringReader = New StringReader(sReturn.Text)
-                    '                    xmlSer = New XmlSerializer(GetType(MediaContainers.Movie))
-                    '                    xmlMov = DirectCast(xmlSer.Deserialize(xmlSTR), MediaContainers.Movie)
-                    '                    xmlMov.Genre = Strings.Join(xmlMov.LGenre.ToArray, " / ")
-                    '                    xmlMov.Outline = xmlMov.Outline.Replace(vbCrLf, vbLf).Replace(vbLf, vbCrLf)
-                    '                    xmlMovSet.Plot = xmlMovSet.Plot.Replace(vbCrLf, vbLf).Replace(vbLf, vbCrLf)
-                    '                    xmlMov.IMDBID = sReturn.IMDBID
-                    '                End Using
-                    '            End If
-                    '        Catch
-                    '        End Try
-                    '    End If
                 End If
 
             Catch ex As Exception
                 logger.Error(ex, New StackFrame().GetMethod().Name)
-
                 xmlMovSet.Clear()
-                'If Not String.IsNullOrEmpty(sPath) Then
-
-                '    'go ahead and rename it now, will still be picked up in getimdbfromnonconf
-                '    If Not Master.eSettings.GeneralOverwriteNfo Then
-                '        RenameNonConfNfo(sPath, True)
-                '    End If
-
-                '    Dim sReturn As New NonConf
-                '    sReturn = GetIMDBFromNonConf(sPath, isSingle)
-                '    xmlMov.IMDBID = sReturn.IMDBID
-                '    Try
-                '        If Not String.IsNullOrEmpty(sReturn.Text) Then
-                '            Using xmlSTR As StringReader = New StringReader(sReturn.Text)
-                '                xmlSer = New XmlSerializer(GetType(MediaContainers.Movie))
-                '                xmlMov = DirectCast(xmlSer.Deserialize(xmlSTR), MediaContainers.Movie)
-                '                xmlMov.Genre = Strings.Join(xmlMov.LGenre.ToArray, " / ")
-                '                xmlMov.Outline = xmlMov.Outline.Replace(vbCrLf, vbLf).Replace(vbLf, vbCrLf)
-                '                xmlMovSet.Plot = xmlMovSet.Plot.Replace(vbCrLf, vbLf).Replace(vbLf, vbCrLf)
-                '                xmlMov.IMDBID = sReturn.IMDBID
-                '            End Using
-                '        End If
-                '    Catch
-                '    End Try
-                'End If
             End Try
 
             If xmlSer IsNot Nothing Then
@@ -2257,6 +2258,14 @@ Public Class NFO
         Catch ex As Exception
             logger.Error(ex, New StackFrame().GetMethod().Name)
         End Try
+    End Sub
+
+    Private Shared Sub ReorderPersons(ByRef lstPerson As List(Of MediaContainers.Person))
+        Dim iOrder As Integer = 0
+        For Each nPerson In lstPerson
+            nPerson.Order = iOrder
+            iOrder += 1
+        Next
     End Sub
 
     Public Shared Sub SaveToNFO_Movie(ByRef tDBElement As Database.DBElement, ByVal ForceFileCleanup As Boolean)
@@ -2539,167 +2548,37 @@ Public Class NFO
 
     Public Class NonConf
 
-#Region "Fields"
-
-        Private _imdbid As String
-        Private _text As String
-
-#End Region 'Fields
-
-#Region "Constructors"
-
-        Public Sub New()
-            Clear()
-        End Sub
-
-#End Region 'Constructors
-
 #Region "Properties"
 
-        Public Property IMDBID() As String
-            Get
-                Return _imdbid
-            End Get
-            Set(ByVal value As String)
-                _imdbid = value
-            End Set
-        End Property
+        Public Property IMDBID() As String = String.Empty
 
-        Public Property Text() As String
-            Get
-                Return _text
-            End Get
-            Set(ByVal value As String)
-                _text = value
-            End Set
-        End Property
+        Public Property Text() As String = String.Empty
 
 #End Region 'Properties
-
-#Region "Methods"
-
-        Public Sub Clear()
-            _imdbid = String.Empty
-            _text = String.Empty
-        End Sub
-
-#End Region 'Methods
 
     End Class
 
     Public Class KnownEpisode
 
-#Region "Fields"
-
-        Private _aireddate As String
-        Private _episode As Integer
-        Private _episodeabsolute As Integer
-        Private _episodecombined As Double
-        Private _episodedvd As Double
-        Private _season As Integer
-        Private _seasoncombined As Integer
-        Private _seasondvd As Integer
-
-#End Region 'Fields
-
-#Region "Constructors"
-
-        Public Sub New()
-            Clear()
-        End Sub
-
-#End Region 'Constructors
-
 #Region "Properties"
 
-        Public Property AiredDate() As String
-            Get
-                Return _aireddate
-            End Get
-            Set(ByVal value As String)
-                _aireddate = value
-            End Set
-        End Property
+        Public Property AiredDate() As String = String.Empty
 
-        Public Property Episode() As Integer
-            Get
-                Return _episode
-            End Get
-            Set(ByVal value As Integer)
-                _episode = value
-            End Set
-        End Property
+        Public Property Episode() As Integer = -1
 
-        Public Property EpisodeAbsolute() As Integer
-            Get
-                Return _episodeabsolute
-            End Get
-            Set(ByVal value As Integer)
-                _episodeabsolute = value
-            End Set
-        End Property
+        Public Property EpisodeAbsolute() As Integer = -1
 
-        Public Property EpisodeCombined() As Double
-            Get
-                Return _episodecombined
-            End Get
-            Set(ByVal value As Double)
-                _episodecombined = value
-            End Set
-        End Property
+        Public Property EpisodeCombined() As Double = -1
 
-        Public Property EpisodeDVD() As Double
-            Get
-                Return _episodedvd
-            End Get
-            Set(ByVal value As Double)
-                _episodedvd = value
-            End Set
-        End Property
+        Public Property EpisodeDVD() As Double = -1
 
-        Public Property Season() As Integer
-            Get
-                Return _season
-            End Get
-            Set(ByVal value As Integer)
-                _season = value
-            End Set
-        End Property
+        Public Property Season() As Integer = -1
 
-        Public Property SeasonCombined() As Integer
-            Get
-                Return _seasoncombined
-            End Get
-            Set(ByVal value As Integer)
-                _seasoncombined = value
-            End Set
-        End Property
+        Public Property SeasonCombined() As Integer = -1
 
-        Public Property SeasonDVD() As Integer
-            Get
-                Return _seasondvd
-            End Get
-            Set(ByVal value As Integer)
-                _seasondvd = value
-            End Set
-        End Property
+        Public Property SeasonDVD() As Integer = -1
 
 #End Region 'Properties
-
-#Region "Methods"
-
-        Public Sub Clear()
-            _aireddate = String.Empty
-            _episode = -1
-            _episodeabsolute = -1
-            _episodecombined = -1
-            _episodedvd = -1
-            _season = -1
-            _seasoncombined = -1
-            _seasondvd = -1
-        End Sub
-
-#End Region 'Methods
 
     End Class
 

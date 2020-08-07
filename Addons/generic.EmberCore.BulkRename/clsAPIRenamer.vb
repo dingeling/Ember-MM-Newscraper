@@ -97,7 +97,7 @@ Public Class FileFolderRenamer
 
     Private Shared Function ApplyPattern(ByVal pattern As String, ByVal flag As String, ByVal v As String) As String
         pattern = pattern.Replace(String.Concat("$", flag), v)
-        If Not v = String.Empty Then
+        If Not String.IsNullOrEmpty(v) Then
             pattern = pattern.Replace(String.Concat("$-", flag), v)
             pattern = pattern.Replace(String.Concat("$+", flag), v)
             pattern = pattern.Replace(String.Concat("$^", flag), v)
@@ -221,14 +221,19 @@ Public Class FileFolderRenamer
                         Dim lFi As New List(Of FileInfo)
                         Try
                             lFi.AddRange(di.GetFiles())
-                        Catch
+                            For Each subtitle In _movie.Subtitles.Where(Function(f) f.SubsPathSpecified)
+                                Dim nPath = subtitle.SubsPath.Replace(srcDir, destDir)
+                                If lFi.Where(Function(f) f.FullName = nPath).Count = 0 Then
+                                    lFi.Add(New FileInfo(nPath))
+                                End If
+                            Next
+                        Catch ex As Exception
+                            logger.Error(ex, New StackFrame().GetMethod().Name)
                         End Try
                         If lFi.Count > 0 Then
-                            Dim srcFile As String
-                            Dim dstFile As String
                             For Each lFile As FileInfo In lFi.OrderBy(Function(s) s.Name)
-                                srcFile = lFile.FullName
-                                dstFile = Path.Combine(destDir, lFile.Name.Replace(_frename.OldFileName.Trim, _frename.NewFileName.Trim))
+                                Dim srcFile As String = lFile.FullName
+                                Dim dstFile As String = Path.Combine(Directory.GetParent(srcFile).FullName, lFile.Name.Replace(_frename.OldFileName.Trim, _frename.NewFileName.Trim))
                                 If Not srcFile = dstFile Then
                                     Try
                                         If sfunction IsNot Nothing Then
@@ -265,28 +270,13 @@ Public Class FileFolderRenamer
                         Master.DB.Save_Movie(_movie, BatchMode, False, False, True, False)
                     End If
 
-                    If Not _frename.IsSingle Then
-                        Dim fileCount As Integer = 0
-                        Dim dirCount As Integer = 0
-
-                        If Directory.Exists(srcDir) Then
-                            Dim di As DirectoryInfo = New DirectoryInfo(srcDir)
-
-                            Try
-                                fileCount = di.GetFiles().Count
-                            Catch
-                            End Try
-
-                            Try
-                                dirCount = di.GetDirectories().Count
-                            Catch
-                            End Try
-
-                            If fileCount = 0 AndAlso dirCount = 0 Then
-                                di.Delete()
-                            End If
-                        End If
-                    End If
+                    'remove empty folders
+                    Dim strBasePath As String = _frename.BasePath
+                    Dim currPath As DirectoryInfo = New DirectoryInfo(_frename.OldFullPath)
+                    While Not currPath.FullName.ToLower = strBasePath.ToLower
+                        If currPath.Exists AndAlso currPath.GetFiles.Count = 0 AndAlso currPath.GetDirectories.Count = 0 Then currPath.Delete()
+                        currPath = currPath.Parent
+                    End While
                 End If
             Else
                 Dim strErrorMessage As String = String.Format("{0}{2}{2}{1}{2}{2}{3}: {4}{2}{5}: {6}{2}{7}: {8}",
@@ -359,15 +349,19 @@ Public Class FileFolderRenamer
                         Dim lFi As New List(Of FileInfo)
 
                         Try
-                            lFi.AddRange(di.GetFiles())
-                        Catch
+                            lFi.AddRange(di.GetFiles(String.Concat(_frename.OldFileName, "*")))
+                            For Each subtitle In _tv.Subtitles.Where(Function(f) f.SubsPathSpecified)
+                                If lFi.Where(Function(f) f.FullName = subtitle.SubsPath).Count = 0 Then
+                                    lFi.Add(New FileInfo(subtitle.SubsPath))
+                                End If
+                            Next
+                        Catch ex As Exception
+                            logger.Error(ex, New StackFrame().GetMethod().Name)
                         End Try
                         If lFi.Count > 0 Then
-                            Dim srcFile As String
-                            Dim dstFile As String
                             For Each lFile As FileInfo In lFi.OrderBy(Function(s) s.Name)
-                                srcFile = lFile.FullName
-                                dstFile = Path.Combine(destDir, lFile.Name.Replace(_frename.OldFileName.Trim, _frename.NewFileName.Trim))
+                                Dim srcFile As String = lFile.FullName
+                                Dim dstFile As String = Path.Combine(lFile.Directory.FullName.Replace(srcDir, destDir), lFile.Name.Replace(_frename.OldFileName.Trim, _frename.NewFileName.Trim))
                                 If Not srcFile = dstFile Then
                                     Try
                                         If sfunction IsNot Nothing Then
@@ -379,6 +373,9 @@ Public Class FileFolderRenamer
                                             File.Move(String.Concat(dstFile, ".$emm$"), dstFile)
                                         Else
                                             If lFile.Name.StartsWith(_frename.OldFileName, StringComparison.OrdinalIgnoreCase) Then
+                                                If Not Directory.Exists(Directory.GetParent(dstFile).FullName) Then
+                                                    Directory.CreateDirectory(Directory.GetParent(dstFile).FullName)
+                                                End If
                                                 File.Move(srcFile, dstFile)
                                             End If
                                         End If
@@ -404,27 +401,16 @@ Public Class FileFolderRenamer
                         Master.DB.Save_TVEpisode(_tv, BatchMode, False, False, False, True)
                     End If
 
-                    Dim fileCount As Integer = 0
-                    Dim dirCount As Integer = 0
-
-                    If Directory.Exists(srcDir) Then
-                        Dim di As DirectoryInfo = New DirectoryInfo(srcDir)
-
-                        Try
-                            fileCount = di.GetFiles().Count
-                        Catch
-                        End Try
-
-                        Try
-                            dirCount = di.GetDirectories().Count
-                        Catch
-                        End Try
-
-                        If fileCount = 0 AndAlso dirCount = 0 OrElse
-                            fileCount = 0 AndAlso dirCount = 1 AndAlso di.GetDirectories.First.Name = ".actors" Then
-                            di.Delete(True)
-                        End If
-                    End If
+                    'remove empty folders
+                    Dim strBasePath As String = _frename.ShowFullPath
+                    Dim currPath As DirectoryInfo = New DirectoryInfo(_frename.OldFullPath)
+                    While Not currPath.FullName.ToLower = strBasePath.ToLower
+                        If currPath.Exists AndAlso
+                            ((currPath.GetFiles.Count = 0 AndAlso currPath.GetDirectories.Count = 0) OrElse
+                            (currPath.GetFiles.Count = 0 AndAlso currPath.GetDirectories.Count = 1 AndAlso
+                            currPath.GetDirectories.First.Name.ToLower = ".actors")) Then currPath.Delete(True)
+                        currPath = currPath.Parent
+                    End While
                 End If
             Else
                 Dim strErrorMessage As String = String.Format("{0}{2}{2}{1}{2}{2}{3}: {4}{2}{5}: {6}",
@@ -450,7 +436,7 @@ Public Class FileFolderRenamer
         Try
             If Not _tv.IsLock AndAlso Not _frename.DirExist Then
                 Dim getError As Boolean = False
-                Dim srcDir As String = Path.Combine(_frename.BasePath, _frename.Path)
+                Dim srcDir As String = _frename.OldFullPath
                 Dim destDir As String = Path.Combine(_frename.BasePath, _frename.NewPath)
 
                 'Rename Directory
@@ -491,26 +477,13 @@ Public Class FileFolderRenamer
                         Master.DB.Save_TVShow(_tv, BatchMode, False, False, True)
                     End If
 
-                    Dim fileCount As Integer = 0
-                    Dim dirCount As Integer = 0
-
-                    If Directory.Exists(srcDir) Then
-                        Dim di As DirectoryInfo = New DirectoryInfo(srcDir)
-
-                        Try
-                            fileCount = di.GetFiles().Count
-                        Catch
-                        End Try
-
-                        Try
-                            dirCount = di.GetDirectories().Count
-                        Catch
-                        End Try
-
-                        If fileCount = 0 AndAlso dirCount = 0 Then
-                            di.Delete()
-                        End If
-                    End If
+                    'remove empty folders
+                    Dim strBasePath As String = _frename.BasePath
+                    Dim currPath As DirectoryInfo = New DirectoryInfo(_frename.OldFullPath)
+                    While Not currPath.FullName.ToLower = strBasePath.ToLower
+                        If currPath.Exists AndAlso currPath.GetFiles.Count = 0 AndAlso currPath.GetDirectories.Count = 0 Then currPath.Delete()
+                        currPath = currPath.Parent
+                    End While
                 End If
             Else
                 If ShowError Then
@@ -596,6 +569,7 @@ Public Class FileFolderRenamer
         'MovieSets
         If _DBElement.Movie.SetsSpecified Then
             MovieFile.Collection = _DBElement.Movie.Sets.Item(0).Title
+            MovieFile.CollectionListTitle = StringUtils.SortTokens_MovieSet(_DBElement.Movie.Sets.Item(0).Title)
         End If
 
         'MPAA
@@ -727,7 +701,7 @@ Public Class FileFolderRenamer
         Return MovieFile
     End Function
 
-    Public Shared Function GetInfo_TVEpisode(ByVal _DBElement As Database.DBElement) As FileRename
+    Public Shared Function GetInfo_TVEpisode(ByVal _DBElement As Database.DBElement, Optional lstEpsiodes As List(Of Database.DBElement) = Nothing) As FileRename
         Dim EpisodeFile As New FileRename
 
         'get list of all episodes for multi-episode files
@@ -758,7 +732,26 @@ Public Class FileFolderRenamer
                             aEpisode.ID = Convert.ToInt32(SQLReader("idEpisode"))
                             aEpisode.Episode = Convert.ToInt32(SQLReader("Episode"))
                             If Not DBNull.Value.Equals(SQLReader("SubEpisode")) Then aEpisode.SubEpisode = Convert.ToInt32(SQLReader("SubEpisode"))
-                            aEpisode.Title = SQLReader("Title").ToString
+
+                            'Title check
+                            'Title from scraping results
+                            If aEpisode.Episode = _DBElement.TVEpisode.Episode AndAlso
+                                aEpisode.SubEpisode = _DBElement.TVEpisode.SubEpisode AndAlso
+                                aSeason = _DBElement.TVEpisode.Season Then
+                                aEpisode.Title = _DBElement.TVEpisode.Title
+                            Else
+                                'Title from scraping results
+                                Dim nEpisodeInfo As Database.DBElement = Nothing
+                                If lstEpsiodes IsNot Nothing Then
+                                    nEpisodeInfo = lstEpsiodes.FirstOrDefault(Function(f) f.TVEpisode.Season = aSeason AndAlso f.TVEpisode.Episode = aEpisode.Episode)
+                                End If
+                                If nEpisodeInfo IsNot Nothing AndAlso nEpisodeInfo.TVEpisode.TitleSpecified Then
+                                    aEpisode.Title = nEpisodeInfo.TVEpisode.Title
+                                Else
+                                    'Title from existing DB entry
+                                    aEpisode.Title = SQLReader("Title").ToString
+                                End If
+                            End If
                             aEpisodesList.Add(aEpisode)
                         End While
                     End Using
@@ -818,8 +811,8 @@ Public Class FileFolderRenamer
         End If
 
         'Show ListTitle
-        If _DBElement.ListTitle IsNot Nothing Then
-            EpisodeFile.ListTitle = _DBElement.ListTitle
+        If _DBElement.TVShow.TitleSpecified Then
+            EpisodeFile.ListTitle = StringUtils.SortTokens_TV(_DBElement.TVShow.Title)
         End If
 
         'Show Title
@@ -887,6 +880,7 @@ Public Class FileFolderRenamer
         'Path
         EpisodeFile.BasePath = _DBElement.Source.Path
         EpisodeFile.OldFullPath = FileUtils.Common.GetMainPath(_DBElement.Filename).FullName
+        EpisodeFile.ShowFullPath = _DBElement.ShowPath
         EpisodeFile.ShowPath = _DBElement.ShowPath.Replace(_DBElement.Source.Path, String.Empty)
         EpisodeFile.ShowPath = If(EpisodeFile.ShowPath.StartsWith(Path.DirectorySeparatorChar), EpisodeFile.ShowPath.Substring(1), EpisodeFile.ShowPath)
         If FileUtils.Common.isVideoTS(_DBElement.Filename) Then
@@ -1059,12 +1053,8 @@ Public Class FileFolderRenamer
         Return dtEpisodes
     End Function
 
-    Public Shared Function HaveBase(ByVal fPattern As String) As Boolean
-        If fPattern.Contains("$B") Then
-            Return True
-        Else
-            Return False
-        End If
+    Public Shared Function HaveBase(ByVal strPattern As String) As Boolean
+        Return strPattern.Contains("$B")
     End Function
 
     Public Shared Sub Process_Movie(ByRef MovieFile As FileRename, ByVal folderPattern As String, ByVal filePattern As String)
@@ -1106,7 +1096,7 @@ Public Class FileFolderRenamer
             Dim newFullDirPath As String = Path.Combine(MovieFile.BasePath, MovieFile.NewPath)
             Dim newDirInfo As New DirectoryInfo(newFullDirPath)
             MovieFile.FileExist = File.Exists(newFullFileName) AndAlso Not (newFullFileName.ToLower = MovieFile.OldFullFileName.ToLower)
-            MovieFile.DirExist = newDirInfo.Exists AndAlso Not If(newFullDirPath.ToLower = MovieFile.OldFullPath.ToLower, True, newDirInfo.GetFileSystemInfos.Count = 0) OrElse Not MovieFile.IsSingle
+            MovieFile.DirExist = MovieFile.IsSingle AndAlso newDirInfo.Exists AndAlso Not If(newFullDirPath.ToLower = MovieFile.OldFullPath.ToLower, True, newDirInfo.GetFileSystemInfos.Count = 0)
             MovieFile.DoRename = Not MovieFile.NewPath = MovieFile.Path OrElse Not MovieFile.NewFileName = MovieFile.OldFileName
         Catch ex As Exception
             logger.Error(ex, New StackFrame().GetMethod().Name)
@@ -1227,6 +1217,7 @@ Public Class FileFolderRenamer
                         strCond = ApplyPattern(strCond, "2", f.Aired)
                         strCond = ApplyPattern(strCond, "3", f.ShortStereoMode)
                         strCond = ApplyPattern(strCond, "4", f.StereoMode)
+                        strCond = ApplyPattern(strCond, "5", f.CollectionListTitle)
                         strCond = ApplyPattern(strCond, "A", f.AudioChannels)
                         strCond = ApplyPattern(strCond, "B", String.Empty) 'This is not needed here, Only to HaveBase
                         strCond = ApplyPattern(strCond, "C", f.Director)
@@ -1260,7 +1251,7 @@ Public Class FileFolderRenamer
                         If Not joinIndex = -1 Then
                             If strCond.Length > joinIndex + 2 Then
                                 strJoin = strCond.Substring(joinIndex + 2, 1)
-                                If Not ". -".IndexOf(strJoin) = -1 Then
+                                If Not ". -,".IndexOf(strJoin) = -1 Then
                                     strCond = ApplyPattern(strCond, String.Concat("G", strJoin), f.Genre.Replace(" / ", strJoin))
                                 Else
                                     strCond = ApplyPattern(strCond, "G", f.Genre.Replace(" / ", " "))
@@ -1290,7 +1281,7 @@ Public Class FileFolderRenamer
                         If Not joinIndex = -1 Then
                             If strCond.Length > joinIndex + 2 Then
                                 strJoin = strCond.Substring(joinIndex + 2, 1)
-                                If Not ". -".IndexOf(strJoin) = -1 Then
+                                If Not ". -,".IndexOf(strJoin) = -1 Then
                                     strCond = ApplyPattern(strCond, String.Concat("U", strJoin), f.Country.Replace(" / ", strJoin))
                                 Else
                                     strCond = ApplyPattern(strCond, "U", f.Country.Replace(" / ", " "))
@@ -1300,7 +1291,7 @@ Public Class FileFolderRenamer
                             End If
                         End If
 
-                        strNoFlags = Regex.Replace(strNoFlags, "\$((?:OO|[12ABCDEFHIJKLMNOPQRSTVWY]|G[. -]|U[. -]?))", String.Empty) '"(?i)\$([DFTYRAS])"  "\$((?i:[DFTYRAS]))"
+                        strNoFlags = Regex.Replace(strNoFlags, "\$((?:OO|[12345ABCDEFHIJKLMNOPQRSTVWY]|G[. -,]|U[. -,]?))", String.Empty) '"(?i)\$([DFTYRAS])"  "\$((?i:[DFTYRAS]))"
                         If strCond.Trim = strNoFlags.Trim Then
                             strCond = String.Empty
                         Else
@@ -1319,6 +1310,7 @@ Public Class FileFolderRenamer
                 pattern = ApplyPattern(pattern, "2", f.Aired)
                 pattern = ApplyPattern(pattern, "3", f.ShortStereoMode)
                 pattern = ApplyPattern(pattern, "4", f.StereoMode)
+                pattern = ApplyPattern(pattern, "5", f.CollectionListTitle)
                 pattern = ApplyPattern(pattern, "A", f.AudioChannels)
                 pattern = ApplyPattern(pattern, "B", String.Empty) 'This is not need here, Only to HaveBase
                 pattern = ApplyPattern(pattern, "C", f.Director)
@@ -1548,7 +1540,7 @@ Public Class FileFolderRenamer
                 If Not nextC = -1 Then
                     If pattern.Length > nextC + 2 Then
                         strCond = pattern.Substring(nextC + 2, 1)
-                        If Not ". -".IndexOf(strCond) = -1 Then
+                        If Not ". -,".IndexOf(strCond) = -1 Then
                             pattern = ApplyPattern(pattern, String.Concat("G", strCond), f.Genre.Replace(" / ", strCond))
                         Else
                             pattern = ApplyPattern(pattern, "G", f.Genre.Replace(" / ", " "))
@@ -1563,7 +1555,7 @@ Public Class FileFolderRenamer
                 If Not nextC = -1 Then
                     If pattern.Length > nextC + 2 Then
                         strCond = pattern.Substring(nextC + 2, 1)
-                        If Not ". -".IndexOf(strCond) = -1 Then
+                        If Not ". -,".IndexOf(strCond) = -1 Then
                             pattern = ApplyPattern(pattern, String.Concat("U", strCond), f.Country.Replace(" / ", strCond))
                         Else
                             pattern = ApplyPattern(pattern, "U", f.Country.Replace(" / ", " "))
@@ -1683,10 +1675,16 @@ Public Class FileFolderRenamer
         If Not String.IsNullOrEmpty(folderPatternSeasons) AndAlso Not String.IsNullOrEmpty(filePatternEpisodes) Then
             For Each tEpisode As Database.DBElement In _tmpShow.Episodes.Where(Function(f) f.IsOnline)
                 Dim EpisodeFile As New FileRename
-                EpisodeFile = GetInfo_TVEpisode(tEpisode)
+                EpisodeFile = GetInfo_TVEpisode(tEpisode, _tmpShow.Episodes)
                 Process_TVEpisode(EpisodeFile, folderPatternSeasons, filePatternEpisodes)
                 If EpisodeFile.DoRename Then
                     DoRenameSingle_TVEpisode(EpisodeFile, tEpisode, BatchMode, ShowError, False)
+
+                    'refresh Filename of Multi-Episode files
+                    Dim lstEpisodes = _tmpShow.Episodes.Where(Function(f) f.FilenameID = tEpisode.FilenameID AndAlso Not f.ID = tEpisode.ID)
+                    For Each nEpisode In lstEpisodes
+                        nEpisode.Filename = tEpisode.Filename
+                    Next
                 End If
             Next
         End If
@@ -1821,6 +1819,7 @@ Public Class FileFolderRenamer
         Private _audiocodec As String
         Private _basepath As String
         Private _collection As String
+        Private _collectionlisttitle As String
         Private _country As String
         Private _direxist As Boolean
         Private _director As String
@@ -1852,6 +1851,7 @@ Public Class FileFolderRenamer
         Private _resolution As String
         Private _seasonsepisodes As New List(Of SeasonsEpisodes)
         Private _shortstereomode As String
+        Private _showfullpath As String
         Private _showpath As String
         Private _showtitle As String
         Private _sorttitle As String
@@ -1909,6 +1909,15 @@ Public Class FileFolderRenamer
             End Get
             Set(ByVal value As String)
                 _collection = value
+            End Set
+        End Property
+
+        Public Property CollectionListTitle() As String
+            Get
+                Return _collectionlisttitle
+            End Get
+            Set(ByVal value As String)
+                _collectionlisttitle = value
             End Set
         End Property
 
@@ -2182,6 +2191,15 @@ Public Class FileFolderRenamer
             End Set
         End Property
 
+        Public Property ShowFullPath() As String
+            Get
+                Return _showfullpath
+            End Get
+            Set(ByVal value As String)
+                _showfullpath = value.Trim
+            End Set
+        End Property
+
         Public Property ShowPath() As String
             Get
                 Return _showpath
@@ -2295,6 +2313,7 @@ Public Class FileFolderRenamer
             _audiocodec = String.Empty
             _basepath = String.Empty
             _collection = String.Empty
+            _collectionlisttitle = String.Empty
             _country = String.Empty
             _direxist = False
             _director = String.Empty
@@ -2326,6 +2345,7 @@ Public Class FileFolderRenamer
             _rating = String.Empty
             _resolution = String.Empty
             _seasonsepisodes.Clear()
+            _showfullpath = String.Empty
             _showpath = String.Empty
             _showtitle = String.Empty
             _sorttitle = String.Empty

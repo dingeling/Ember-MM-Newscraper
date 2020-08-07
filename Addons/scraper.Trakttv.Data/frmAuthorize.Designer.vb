@@ -1,9 +1,9 @@
-﻿<Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()> _
+﻿<Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()>
 Partial Class frmAuthorize
     Inherits System.Windows.Forms.Form
 
     'Das Formular überschreibt den Löschvorgang, um die Komponentenliste zu bereinigen.
-    <System.Diagnostics.DebuggerNonUserCode()> _
+    <System.Diagnostics.DebuggerNonUserCode()>
     Protected Overrides Sub Dispose(ByVal disposing As Boolean)
         Try
             If disposing AndAlso components IsNot Nothing Then
@@ -20,7 +20,7 @@ Partial Class frmAuthorize
     'Hinweis: Die folgende Prozedur ist für den Windows Form-Designer erforderlich.
     'Das Bearbeiten ist mit dem Windows Form-Designer möglich.  
     'Das Bearbeiten mit dem Code-Editor ist nicht möglich.
-    <System.Diagnostics.DebuggerStepThrough()> _
+    <System.Diagnostics.DebuggerStepThrough()>
     Private Sub InitializeComponent()
         Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(frmAuthorize))
         Me.btnOpen = New System.Windows.Forms.Button()
@@ -130,12 +130,12 @@ Partial Class frmAuthorize
         Me.lblInfo.Anchor = System.Windows.Forms.AnchorStyles.Left
         Me.lblInfo.AutoSize = True
         Me.tblAuthorize.SetColumnSpan(Me.lblInfo, 3)
-        Me.lblInfo.Location = New System.Drawing.Point(57, 20)
+        Me.lblInfo.Location = New System.Drawing.Point(57, 14)
         Me.lblInfo.Name = "lblInfo"
-        Me.lblInfo.Size = New System.Drawing.Size(431, 13)
+        Me.lblInfo.Size = New System.Drawing.Size(401, 26)
         Me.lblInfo.TabIndex = 5
-        Me.lblInfo.Text = "The Trakt addon CAN NOT be used without authorizing it to access your trakt.tv ac" &
-    "count."
+        Me.lblInfo.Text = "The Trakt.tv addon CAN NOT be used without authorizing it to access your trakt.tv" &
+    " account."
         '
         'pnlAuthorize
         '

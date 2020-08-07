@@ -107,7 +107,11 @@ Public Class dlgExportMovies
                     SQLcount.Read()
                     bwLoadInfo.ReportProgress(-1, SQLcount("mcount")) ' set maximum
                 End Using
-                SQLNewcommand.CommandText = String.Format("SELECT idMovie FROM '{0}' ORDER BY SortedTitle COLLATE NOCASE;", strCurrList_Movies)
+                If strCurrList_Movies = "movielist" Then
+                    SQLNewcommand.CommandText = String.Format("SELECT idMovie FROM '{0}' ORDER BY SortedTitle COLLATE NOCASE;", strCurrList_Movies)
+                Else
+                    SQLNewcommand.CommandText = String.Format("SELECT idMovie FROM '{0}';", strCurrList_Movies)
+                End If
                 Using SQLreader As SQLite.SQLiteDataReader = SQLNewcommand.ExecuteReader()
                     If SQLreader.HasRows Then
                         While SQLreader.Read()
@@ -141,7 +145,11 @@ Public Class dlgExportMovies
                     SQLcount.Read()
                     bwLoadInfo.ReportProgress(-1, SQLcount("mcount")) ' set maximum
                 End Using
-                SQLNewcommand.CommandText = String.Format("SELECT idShow FROM '{0}' ORDER BY SortedTitle COLLATE NOCASE;", strCurrList_TVShows)
+                If strCurrList_TVShows = "tvshowlist" Then
+                    SQLNewcommand.CommandText = String.Format("SELECT idShow FROM '{0}' ORDER BY SortedTitle COLLATE NOCASE;", strCurrList_TVShows)
+                Else
+                    SQLNewcommand.CommandText = String.Format("SELECT idShow FROM '{0}';", strCurrList_TVShows)
+                End If
                 Using SQLreader As SQLite.SQLiteDataReader = SQLNewcommand.ExecuteReader()
                     If SQLreader.HasRows Then
                         While SQLreader.Read()
@@ -252,7 +260,7 @@ Public Class dlgExportMovies
             ' copy all the files of the current directory
             Dim ChildFile As FileInfo
             For Each ChildFile In SourceDir.GetFiles()
-                If (ChildFile.Attributes And FileAttributes.Hidden) = FileAttributes.Hidden OrElse Path.GetExtension(ChildFile.FullName) = ".html" Then Continue For
+                If (ChildFile.Attributes And FileAttributes.Hidden) = FileAttributes.Hidden Then Continue For
                 If Overwrite Then
                     ChildFile.CopyTo(Path.Combine(DestDir.FullName, ChildFile.Name), True)
                 Else
@@ -314,7 +322,7 @@ Public Class dlgExportMovies
         End If
 
         'loading Ember default templates
-        Dim diDefault As DirectoryInfo = New DirectoryInfo(Path.Combine(Functions.AppPath, "Modules", "Templates"))
+        Dim diDefault As DirectoryInfo = New DirectoryInfo(Path.Combine(Functions.AppPath, "Modules\generic.embercore.movieexporter", "Templates"))
         If diDefault.Exists Then
             For Each i As DirectoryInfo In diDefault.GetDirectories
                 If Not (i.Attributes And FileAttributes.Hidden) = FileAttributes.Hidden Then

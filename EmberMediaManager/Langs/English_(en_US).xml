@@ -9,14 +9,14 @@
   <string id="8">&amp;Tools</string>
   <string id="9">&amp;Clean Files</string>
   <string id="10">&amp;Sort Files Into Folders</string>
-  <string id="11">Copy Existing Fanart To &amp;Backdrops Folder</string>
+  <string id="11">Copy Existing Fanart To Backdrops Folder</string>
   <string id="12">Revert Meta Data Studio &amp;Tags</string>
   <string id="13">Folder Name</string>
   <string id="14">Sets &amp;Manager</string>
   <string id="15">File Name</string>
   <string id="16">Season Result</string>
-  <string id="17">Clear &amp;All Caches</string>
-  <string id="18">Re&amp;load All Movies</string>
+  <string id="17">Clear All Caches</string>
+  <string id="18">Reload All Movies</string>
   <string id="19">Close</string>
   <string id="20">Genre</string>
   <string id="21">Title</string>
@@ -47,7 +47,7 @@
   <string id="46">Or</string>
   <string id="47">New</string>
   <string id="48">Marked</string>
-  <string id="49">Year:</string>
+  <string id="49">will be cleared</string>
   <string id="50">Source:</string>
   <string id="51">Genre:</string>
   <string id="52">Filters</string>
@@ -188,7 +188,7 @@
   <string id="187">&amp;Format / Indent</string>
   <string id="188">&amp;Parse</string>
   <string id="189">&amp;Save</string>
-  <string id="190">Manual NFO Editor |</string>
+  <string id="190">Manual NFO Editor</string>
   <string id="191">This is not a proper XML document</string>
   <string id="192">File is not valid.</string>
   <string id="193">File is valid.</string>
@@ -236,15 +236,15 @@
   <string id="235">MPAA Rating:</string>
   <string id="236">Release Date:</string>
   <string id="237">Countries</string>
-  <string id="238">Runtime:</string>
+  <string id="238">Runtime</string>
   <string id="239">Director:</string>
-  <string id="240">Top 250:</string>
+  <string id="240">Use Original Title as Title</string>
   <string id="241">Plot:</string>
   <string id="242">Plot Outline:</string>
-  <string id="243">Tagline:</string>
-  <string id="244">Votes:</string>
+  <string id="243">Tags</string>
+  <string id="244">Votes</string>
   <string id="245">Rating:</string>
-  <string id="246">Title:</string>
+  <string id="246">Video Sources</string>
   <string id="247">Season Scraped</string>
   <string id="248">Show Scraped</string>
   <string id="249">Enable Image Caching</string>
@@ -260,7 +260,7 @@
   <string id="259">File Pattern</string>
   <string id="260">Folder Pattern (for Multiple movies in Folder)</string>
   <string id="261">Display Only Movies That Will Be Renamed</string>
-  <string id="262">$1 = First Letter of the Title{0}$2 = Aired date (episodes only){0}$3 = ShortStereoMode{0}$4 = StereoMode{0}$A = Audio Channels{0}$B = Base Path{0}$C = Director{0}$D = Directory{0}$E = Sort Title{0}$F = File Name{0}$G = Genre (Follow with a space, dot or hyphen to change separator){0}$H = Video Codec{0}$I = IMDB ID{0}$J = Audio Codec{0}$K#.S? = #Padding (0-9), Season Separator (. or _ or x), Season Prefix{0}$L = List Title{0}$M = MPAA{0}$N = Collection Name{0}$O = OriginalTitle{0}$OO = OriginalTitle if different from Title{0}$P = Rating{0}$Q#.E? = #Padding (0-9), Episode Separator (. or _ or x), Episode Prefix{0}$R = Resolution{0}$S = Video Source{0}$T = Title{0}$U = Country (Follow with a space, dot or hyphen to change separator){0}$V = 3D (If Multiview > 1){0}$W#.S?#.E? = #Padding (0-9), Seasons Separator (. or _), Season Prefix, #Padding (0-9), Episode Separator (. or _ or x), Episode Prefix{0}$Y = Year{0}$X. (Replace Space with .){0}$Z = Show Title{0}{{}} = Optional{0}$?aaa?bbb? = Replace aaa with bbb{0}$! = Uppercase first letter in each word{0}$; = Lowercase all letters{0}$- = Remove previous char if next pattern does not have a value{0}$+ = Remove next char if previous pattern does not have a value{0}$^ = Remove previous and next char if next pattern does not have a value</string>
+  <string id="262">$1 = First Letter of the Title{0}$2 = Aired date (episodes only){0}$3 = ShortStereoMode{0}$4 = StereoMode{0}$5 = Collection List Title{0}$A = Audio Channels{0}$B = Base Path{0}$C = Director{0}$D = Directory{0}$E = Sort Title{0}$F = File Name{0}$G = Genre (Follow with a space, dot, comma or hyphen to change separator){0}$H = Video Codec{0}$I = IMDB ID{0}$J = Audio Codec{0}$K#.S? = #Padding (0-9), Season Separator (. or _ or x), Season Prefix{0}$L = List Title{0}$M = MPAA{0}$N = Collection Name{0}$O = OriginalTitle{0}$OO = OriginalTitle if different from Title{0}$P = Rating{0}$Q#.E? = #Padding (0-9), Episode Separator (. or _ or x), Episode Prefix{0}$R = Resolution{0}$S = Video Source{0}$T = Title{0}$U = Country (Follow with a space, dot, comma or hyphen to change separator){0}$V = 3D (If Multiview > 1){0}$W#.S?#.E? = #Padding (0-9), Seasons Separator (. or _), Season Prefix, #Padding (0-9), Episode Separator (. or _ or x), Episode Prefix{0}$Y = Year{0}$X. (Replace Space with .){0}$Z = Show Title{0}{{}} = Optional{0}$?aaa?bbb? = Replace aaa with bbb{0}$! = Uppercase first letter in each word{0}$; = Lowercase all letters{0}$- = Remove previous char if next pattern does not have a value{0}$+ = Remove next char if previous pattern does not have a value{0}$^ = Remove previous and next char if next pattern does not have a value</string>
   <string id="263">Manual Rename</string>
   <string id="264">Exclude</string>
   <string id="265">Scraping Episode Images</string>
@@ -394,7 +394,7 @@
   <string id="393">Producers</string>
   <string id="394">Credits (Writers)</string>
   <string id="395">Studio</string>
-  <string id="396">Runtime</string>
+  <string id="396">Cancelled</string>
   <string id="397">Tagline</string>
   <string id="398">TeraCopy.exe not found</string>
   <string id="399">Downloading and Saving Contents into Database</string>
@@ -763,7 +763,7 @@
   <string id="762">Verifying TV Episode Details:</string>
   <string id="763">Search String</string>
   <string id="764">Source Name</string>
-  <string id="765">Map Media Source by File Extension</string>
+  <string id="765">Map Video Source by File Extension</string>
   <string id="766">(Re)Scrape Show</string>
   <string id="767">Change Show</string>
   <string id="768">Delete TV Show</string>
@@ -782,7 +782,7 @@
   <string id="781">Get watched episodes</string>
   <string id="782">Genre Manager</string>
   <string id="783">Plot Summary:</string>
-  <string id="784">Media Sources Editor</string>
+  <string id="784">Video Source Mapping</string>
   <string id="785">Audio &amp; Video Codec Mapping</string>
   <string id="786">Default List</string>
   <string id="787">Get your API Key from fanart.tv</string>
@@ -863,7 +863,7 @@
   <string id="862">Loading translations...</string>
   <string id="863">Positioning controls...</string>
   <string id="864">Setting menus...</string>
-  <string id="865">Version {0}.{1}.{2}.{3} {4}</string>
+  <string id="865">Season Title</string>
   <string id="866">Metadata</string>
   <string id="867">XBMC Frodo</string>
   <string id="868">Tag Manager</string>
@@ -880,9 +880,9 @@
   <string id="879">Single Folder</string>
   <string id="880">Parent Folder</string>
   <string id="881">Added</string>
-  <string id="882">Use MPAA as Fallback for FSK Rating</string>
+  <string id="882">comma separated</string>
   <string id="883">Episode Scraped</string>
-  <string id="884">IMDB Mirror:</string>
+  <string id="884"></string>
   <string id="885">Change Watched Status</string>
   <string id="886">Downloading {0}</string>
   <string id="887">Preparing images...</string>
@@ -915,7 +915,7 @@
   <string id="914">Select Trailer</string>
   <string id="915">Select Trailer to Download</string>
   <string id="916">Manual Trailer Entry</string>
-  <string id="917">Direct Link, YouTube, IMDB or Apple Trailer URL:</string>
+  <string id="917">Direct Link or YouTube URL</string>
   <string id="918">Compiling trailer list...</string>
   <string id="919">Preview Trailer</string>
   <string id="920">Local Trailer:</string>
@@ -1098,7 +1098,7 @@
   <string id="1006">TV Movie Titles ({0})</string>
   <string id="1007">You've changed a setting that makes it necessary that the database is cleaned up.Please make sure that all sources are available!{0}{0}Should the process be continued?</string>
   <string id="1008">Sync Full</string>
-  <string id="1009">Ember {0} - (New version available!)</string>
+  <string id="1009">New version available</string>
   <string id="1010">TV Show Landscape</string>
   <string id="1011">TV Show CharacterArt</string>
   <string id="1012">TV Show ClearLogo</string>
@@ -1176,21 +1176,21 @@
   <string id="1084">File already exists</string>
   <string id="1085">Directory already exists or is not empty</string>
   <string id="1086">The directory can not be renamed because the directory is specified as the source.</string>
-  <string id="1087">Edit Data Field</string>
-  <string id="1088">New value for "{0}"</string>
+  <string id="1087">Clear or Replace Data Fields</string>
+  <string id="1088">include Description</string>
   <string id="1089">Added TV Show</string>
   <string id="1090">Active</string>
   <string id="1091">Inactive</string>
   <string id="1092">Open TVDB-Page</string>
   <string id="1093">Open Fanart.tv-Page</string>
-  <string id="1094">PIN Code</string>
-  <string id="1095">The Trakt addon CAN NOT be used without authorizing it to access your trakt.tv account.</string>
+  <string id="1094">Rewrite MovieSet Content</string>
+  <string id="1095">Rewrite TV Show Content</string>
   <string id="1096">ClearArt</string>
   <string id="1097">ClearLogo</string>
   <string id="1098">DiscArt</string>
   <string id="1099">Get Missing Episodes</string>
   <string id="1100">Unmark all items in the list</string>
-  <string id="1101"></string>
+  <string id="1101">Select profile</string>
   <string id="1102">No ClearArts found</string>
   <string id="1103">No ClearLogos found</string>
   <string id="1104">No DiscArts found</string>
@@ -1201,7 +1201,7 @@
   <string id="1109">Select ClearArt</string>
   <string id="1110">Select ClearLogo</string>
   <string id="1111">Select DiscArt</string>
-  <string id="1112"></string>
+  <string id="1112">Do you want to restart Ember Media Manager and load the selected profile?</string>
   <string id="1113"></string>
   <string id="1114"></string>
   <string id="1115"></string>
@@ -1220,7 +1220,7 @@
   <string id="1128">Scraping Media (Selected Movies - Ask):</string>
   <string id="1129">Scraping Media (Selected Movies - Auto):</string>
   <string id="1130">Scraping Media (Selected Movies - Skip):</string>
-  <string id="1131"></string>
+  <string id="1131">Scanning Source</string>
   <string id="1132">Edit the details for the selected movieset.</string>
   <string id="1133">You need your own API key for that</string>
   <string id="1134">Error</string>
@@ -1230,8 +1230,8 @@
   <string id="1138">Quality</string>
   <string id="1139">Select None</string>
   <string id="1140">CharacterArt</string>
-  <string id="1141"></string>
-  <string id="1142"></string>
+  <string id="1141">The Trakt addon CAN NOT be used without authorizing it to access your trakt.tv account.</string>
+  <string id="1142">PIN Code</string>
   <string id="1143"></string>
   <string id="1144"></string>
   <string id="1145"></string>
@@ -1387,7 +1387,7 @@
   <string id="1295">Part of a MovieSet</string>
   <string id="1296"></string>
   <string id="1297">Rewriting Media:</string>
-  <string id="1298">Rewrite All Movie Content</string>
+  <string id="1298">Rewrite Movie Content</string>
   <string id="1299">Cancel Rewriting</string>
   <string id="1300">Canceling Rewriting...</string>
   <string id="1301">Mark New MovieSets</string>
@@ -1469,7 +1469,7 @@
   <string id="1377">Query</string>
   <string id="1378">Type</string>
   <string id="1379">Movie</string>
-  <string id="1380"></string>
+  <string id="1380">additional page(s) to parse, needs longer to scrape</string>
   <string id="1381">Movieset</string>
   <string id="1382">Result of query must contain either field idMovie (Movie-Filter), idSet(Set-Filter) or idShow(Show-Filter) or/and idMedia!</string>
   <string id="1383">Complete overview of Ember datatables:</string>
@@ -1477,7 +1477,7 @@
   <string id="1385">Media List Editor</string>
   <string id="1386">Invalid SQL!</string>
   <string id="1387">Use digit grouping symbol for Votes count</string>
-  <string id="1388">Display watched progress for shows (Time consuming!)</string>
+  <string id="1388"></string>
   <string id="1389">Short Titles ({0})</string>
   <string id="1390">Custom Media Lists</string>
   <string id="1391">Prefix</string>
@@ -1512,7 +1512,7 @@
   <string id="1421">Load comments</string>
   <string id="1422">Kodi Interface</string>
   <string id="1423">Check Connection</string>
-  <string id="1424">Populate Sources</string>
+  <string id="1424">Read Sources from Kodi</string>
   <string id="1425">Kodi Host</string>
   <string id="1426">Kodi Source type</string>
   <string id="1427">Windows UNC/Linux/MacOS X/Openelec</string>
@@ -1552,10 +1552,10 @@
   <string id="1461">All movies</string>
   <string id="1462">Filtered movies</string>
   <string id="1463">Selected movies</string>
-  <string id="1464">Use personal rating</string>
+  <string id="1464"></string>
   <string id="1465">Export to Kodi playlist</string>
   <string id="1466">Send list to playlist in Kodi</string>
-  <string id="1467">Fallback to global rating</string>
+  <string id="1467">User Rating</string>
   <string id="1468"></string>
   <string id="1469"></string>
   <string id="1470"></string>

@@ -93,6 +93,36 @@ Namespace My.Resources
         '''<summary>
         '''  Sucht eine lokalisierte Ressource vom Typ System.Drawing.Bitmap.
         '''</summary>
+        Friend ReadOnly Property bug() As System.Drawing.Bitmap
+            Get
+                Dim obj As Object = ResourceManager.GetObject("bug", resourceCulture)
+                Return CType(obj,System.Drawing.Bitmap)
+            End Get
+        End Property
+        
+        '''<summary>
+        '''  Sucht eine lokalisierte Ressource vom Typ System.Drawing.Bitmap.
+        '''</summary>
+        Friend ReadOnly Property colRating() As System.Drawing.Bitmap
+            Get
+                Dim obj As Object = ResourceManager.GetObject("colRating", resourceCulture)
+                Return CType(obj,System.Drawing.Bitmap)
+            End Get
+        End Property
+        
+        '''<summary>
+        '''  Sucht eine lokalisierte Ressource vom Typ System.Drawing.Bitmap.
+        '''</summary>
+        Friend ReadOnly Property colUserRating() As System.Drawing.Bitmap
+            Get
+                Dim obj As Object = ResourceManager.GetObject("colUserRating", resourceCulture)
+                Return CType(obj,System.Drawing.Bitmap)
+            End Get
+        End Property
+        
+        '''<summary>
+        '''  Sucht eine lokalisierte Ressource vom Typ System.Drawing.Bitmap.
+        '''</summary>
         Friend ReadOnly Property de() As System.Drawing.Bitmap
             Get
                 Dim obj As Object = ResourceManager.GetObject("de", resourceCulture)
@@ -646,6 +676,26 @@ Namespace My.Resources
         '''<summary>
         '''  Sucht eine lokalisierte Ressource vom Typ System.Drawing.Bitmap.
         '''</summary>
+        Friend ReadOnly Property patreon() As System.Drawing.Bitmap
+            Get
+                Dim obj As Object = ResourceManager.GetObject("patreon", resourceCulture)
+                Return CType(obj,System.Drawing.Bitmap)
+            End Get
+        End Property
+        
+        '''<summary>
+        '''  Sucht eine lokalisierte Ressource vom Typ System.Drawing.Bitmap.
+        '''</summary>
+        Friend ReadOnly Property paypal() As System.Drawing.Bitmap
+            Get
+                Dim obj As Object = ResourceManager.GetObject("paypal", resourceCulture)
+                Return CType(obj,System.Drawing.Bitmap)
+            End Get
+        End Property
+        
+        '''<summary>
+        '''  Sucht eine lokalisierte Ressource vom Typ System.Drawing.Bitmap.
+        '''</summary>
         Friend ReadOnly Property Play_Icon() As System.Drawing.Bitmap
             Get
                 Dim obj As Object = ResourceManager.GetObject("Play_Icon", resourceCulture)
@@ -818,7 +868,16 @@ Namespace My.Resources
         End Property
         
         '''<summary>
-        '''  Sucht eine lokalisierte Zeichenfolge, die http://www.EmberMediaManager.org/ ähnelt.
+        '''  Sucht eine lokalisierte Zeichenfolge, die http://bugs.embermediamanager.org ähnelt.
+        '''</summary>
+        Friend ReadOnly Property urlEmberBugTracker() As String
+            Get
+                Return ResourceManager.GetString("urlEmberBugTracker", resourceCulture)
+            End Get
+        End Property
+        
+        '''<summary>
+        '''  Sucht eine lokalisierte Zeichenfolge, die http://www.embermediamanager.org/ ähnelt.
         '''</summary>
         Friend ReadOnly Property urlEmberMediaManager() As String
             Get

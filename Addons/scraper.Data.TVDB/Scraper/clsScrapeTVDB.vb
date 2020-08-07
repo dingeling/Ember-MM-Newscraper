@@ -175,9 +175,14 @@ Namespace TVDBs
         ''' <param name="tvdbID"></param>
         ''' <returns></returns>
         ''' <remarks></remarks>
-        Private Async Function GetFullSeriesById(ByVal tvdbID As Integer) As Task(Of TVDB.Model.SeriesDetails)
-            Dim Result As TVDB.Model.SeriesDetails = Await _TVDBApi.GetFullSeriesById(tvdbID, _SpecialSettings.Language, _TVDBMirror)
-            Return Result
+        Private Async Function GetFullSeriesById(ByVal tvdbID As Integer, Optional overwriteLanguage As String = "") As Task(Of TVDB.Model.SeriesDetails)
+            Dim strLanguage As String = String.Empty
+            If Not String.IsNullOrEmpty(overwriteLanguage) Then
+                strLanguage = overwriteLanguage
+            Else
+                strLanguage = _SpecialSettings.Language
+            End If
+            Return Await _TVDBApi.GetFullSeriesById(tvdbID, strLanguage, _TVDBMirror)
         End Function
         ''' <summary>
         ''' 
@@ -211,17 +216,19 @@ Namespace TVDBs
 
             nTVShow.Scrapersource = "TVDB"
             nTVShow.TVDB = CStr(TVShowInfo.Series.Id)
-            nTVShow.IMDB = CStr(TVShowInfo.Series.IMDBId)
+            nTVShow.IMDB = TVShowInfo.Series.IMDBId
 
             'Actors
             If FilteredOptions.bMainActors Then
                 If TVShowInfo.Actors IsNot Nothing Then
                     For Each aCast As TVDB.Model.Actor In TVShowInfo.Actors.Where(Function(f) f.Name IsNot Nothing AndAlso f.Role IsNot Nothing).OrderBy(Function(f) f.SortOrder)
-                        nTVShow.Actors.Add(New MediaContainers.Person With {.Name = aCast.Name,
-                                                                          .Order = aCast.SortOrder,
-                                                                          .Role = aCast.Role,
-                                                                          .URLOriginal = If(Not String.IsNullOrEmpty(aCast.ImagePath), String.Format("{0}/banners/{1}", _TVDBMirror.Address, aCast.ImagePath), String.Empty),
-                                                                          .TVDB = CStr(aCast.Id)})
+                        nTVShow.Actors.Add(New MediaContainers.Person With {
+                                           .Name = aCast.Name,
+                                           .Order = aCast.SortOrder,
+                                           .Role = aCast.Role,
+                                           .URLOriginal = If(Not String.IsNullOrEmpty(aCast.ImagePath), String.Format("{0}/banners/{1}", _TVDBMirror.Address, aCast.ImagePath), String.Empty),
+                                           .TVDB = CStr(aCast.Id)
+                                           })
                     Next
                 End If
             End If
@@ -260,8 +267,16 @@ Namespace TVDBs
 
             'Plot
             If FilteredOptions.bMainPlot Then
-                If TVShowInfo.Series.Overview IsNot Nothing Then
+                If TVShowInfo.Series.Overview IsNot Nothing AndAlso Not String.IsNullOrEmpty(TVShowInfo.Series.Overview) Then
                     nTVShow.Plot = TVShowInfo.Series.Overview
+                ElseIf _SpecialSettings.FallBackEng Then
+                    'looks like TVDb does an auto fallback to EN, so this is only used as backup
+                    Dim intTVShowId = TVShowInfo.Series.Id
+                    Dim APIResultEN As Task(Of TVDB.Model.SeriesDetails) = Task.Run(Function() GetFullSeriesById(intTVShowId, "en"))
+                    If APIResultEN IsNot Nothing AndAlso APIResultEN.Result IsNot Nothing AndAlso
+                        APIResultEN.Result.Series.Overview IsNot Nothing AndAlso Not String.IsNullOrEmpty(APIResultEN.Result.Series.Overview) Then
+                        nTVShow.Plot = APIResultEN.Result.Series.Overview
+                    End If
                 End If
             End If
 
@@ -343,7 +358,7 @@ Namespace TVDBs
 
         Public Function GetTVEpisodeInfo(ByVal tvdbID As Integer, ByVal SeasonNumber As Integer, ByVal EpisodeNumber As Integer, ByVal tEpisodeOrdering As Enums.EpisodeOrdering, ByRef FilteredOptions As Structures.ScrapeOptions) As MediaContainers.EpisodeDetails
             Try
-                Dim APIResult As Task(Of TVDB.Model.SeriesDetails) = Task.Run(Function() GetFullSeriesById(CInt(tvdbID)))
+                Dim APIResult As Task(Of TVDB.Model.SeriesDetails) = Task.Run(Function() GetFullSeriesById(tvdbID))
                 If APIResult Is Nothing OrElse APIResult.Result Is Nothing Then
                     Return Nothing
                 End If
@@ -373,13 +388,16 @@ Namespace TVDBs
         End Function
 
         Public Function GetTVEpisodeInfo(ByVal tvdbID As Integer, ByVal Aired As String, ByRef FilteredOptions As Structures.ScrapeOptions) As MediaContainers.EpisodeDetails
-            Dim APIResult As Task(Of TVDB.Model.SeriesDetails) = Task.Run(Function() GetFullSeriesById(CInt(tvdbID)))
+            Dim dAired As New Date
+            If Not Date.TryParse(Aired, dAired) Then Return Nothing
+
+            Dim APIResult As Task(Of TVDB.Model.SeriesDetails) = Task.Run(Function() GetFullSeriesById(tvdbID))
             If APIResult Is Nothing OrElse APIResult.Result Is Nothing Then
                 Return Nothing
             End If
             Dim TVShowInfo = APIResult.Result
 
-            Dim EpisodeList As IEnumerable(Of TVDB.Model.Episode) = TVShowInfo.Series.Episodes.Where(Function(f) f.FirstAired = CDate(Aired))
+            Dim EpisodeList As IEnumerable(Of TVDB.Model.Episode) = TVShowInfo.Series.Episodes.Where(Function(f) f.FirstAired = dAired)
             If EpisodeList IsNot Nothing AndAlso EpisodeList.Count = 1 Then
                 Dim nEpisode As MediaContainers.EpisodeDetails = GetTVEpisodeInfo(EpisodeList(0), TVShowInfo, FilteredOptions)
                 Return nEpisode
@@ -428,22 +446,22 @@ Namespace TVDBs
 
             'Season # AirsAfterSeason (DisplaySeason, DisplayEpisode; Special handling like in Kodi)
             If Not CDbl(EpisodeInfo.AirsAfterSeason) = -1 Then
-                nEpisode.DisplaySeason = CInt(EpisodeInfo.AirsAfterSeason)
+                nEpisode.DisplaySeason = EpisodeInfo.AirsAfterSeason
                 nEpisode.DisplayEpisode = 4096
             End If
 
             'Season # Combined
-            If Not CInt(EpisodeInfo.CombinedSeason) = -1 Then
+            If Not EpisodeInfo.CombinedSeason = -1 Then
                 nEpisode.SeasonCombined = EpisodeInfo.CombinedSeason
             End If
 
             'Season # DVD
-            If Not CInt(EpisodeInfo.DVDSeason) = -1 Then
+            If Not EpisodeInfo.DVDSeason = -1 Then
                 nEpisode.SeasonDVD = EpisodeInfo.DVDSeason
             End If
 
             'Season # Standard
-            If Not CInt(EpisodeInfo.SeasonNumber) = -1 Then
+            If Not EpisodeInfo.SeasonNumber = -1 Then
                 nEpisode.Season = EpisodeInfo.SeasonNumber
             End If
 
@@ -451,11 +469,13 @@ Namespace TVDBs
             If FilteredOptions.bEpisodeActors Then
                 If TVShowInfo.Actors IsNot Nothing Then
                     For Each aCast As TVDB.Model.Actor In TVShowInfo.Actors.Where(Function(f) f.Name IsNot Nothing AndAlso f.Role IsNot Nothing).OrderBy(Function(f) f.SortOrder)
-                        nEpisode.Actors.Add(New MediaContainers.Person With {.Name = aCast.Name,
-                                                                          .Order = aCast.SortOrder,
-                                                                          .Role = aCast.Role,
-                                                                          .URLOriginal = If(Not String.IsNullOrEmpty(aCast.ImagePath), String.Format("{0}/banners/{1}", _TVDBMirror.Address, aCast.ImagePath), String.Empty),
-                                                                          .TVDB = CStr(aCast.Id)})
+                        nEpisode.Actors.Add(New MediaContainers.Person With {
+                                            .Name = aCast.Name,
+                                            .Order = aCast.SortOrder,
+                                            .Role = aCast.Role,
+                                            .URLOriginal = If(Not String.IsNullOrEmpty(aCast.ImagePath), String.Format("{0}/banners/{1}", _TVDBMirror.Address, aCast.ImagePath), String.Empty),
+                                            .TVDB = CStr(aCast.Id)
+                                            })
                     Next
                 End If
             End If
@@ -509,6 +529,17 @@ Namespace TVDBs
             If FilteredOptions.bEpisodePlot Then
                 If EpisodeInfo.Overview IsNot Nothing Then
                     nEpisode.Plot = EpisodeInfo.Overview
+                ElseIf _SpecialSettings.FallBackEng Then
+                    Dim intTVShowId = TVShowInfo.Series.Id
+                    Dim APIResult As Task(Of TVDB.Model.SeriesDetails) = Task.Run(Function() GetFullSeriesById(intTVShowId, "en"))
+                    If APIResult IsNot Nothing AndAlso APIResult.Result IsNot Nothing Then
+                        'find episode
+                        Dim intEpisodeId = EpisodeInfo.Id
+                        Dim nEpisodeInfoEN = APIResult.Result.Series.Episodes.FirstOrDefault(Function(f) f.Id = intEpisodeId)
+                        If nEpisodeInfoEN IsNot Nothing AndAlso Not String.IsNullOrEmpty(nEpisodeInfoEN.Overview) Then
+                            nEpisode.Plot = nEpisodeInfoEN.Overview
+                        End If
+                    End If
                 End If
             End If
 

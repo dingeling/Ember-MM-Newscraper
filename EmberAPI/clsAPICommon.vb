@@ -835,15 +835,16 @@ Public Class Enums
     End Enum
 
     Public Enum ScannerEventType As Integer
-        None = 0
-        Added_Movie = 1
-        Added_TVEpisode = 2
-        Added_TVShow = 3
-        CleaningDatabase = 4
-        PreliminaryTasks = 5
-        Refresh_TVShow = 6
-        ScannerEnded = 7
-        ScannerStarted = 8
+        None
+        Added_Movie
+        Added_TVEpisode
+        Added_TVShow
+        CleaningDatabase
+        CurrentSource
+        PreliminaryTasks
+        Refresh_TVShow
+        ScannerEnded
+        ScannerStarted
     End Enum
 
     Public Enum ScraperEventType As Integer
@@ -909,14 +910,19 @@ Public Class Enums
     End Enum
 
     Public Enum TaskManagerType As Integer
-        CopyBackdrops = 0
-        DoTitleCheck = 1
-        GetMissingEpisodes = 2
-        Reload = 3
-        SetLanguage = 4
-        SetLockedState = 5
-        SetMarkedState = 6
-        SetWatchedState = 7
+        ''' <summary>
+        ''' only to set nothing after init
+        ''' </summary>
+        None
+        DataFields_ClearOrReplace
+        CopyBackdrops
+        DoTitleCheck
+        GetMissingEpisodes
+        Reload
+        SetLanguage
+        SetLockedState
+        SetMarkedState
+        SetWatchedState
     End Enum
 
     Public Enum TVBannerSize As Integer
@@ -967,21 +973,31 @@ Public Class Enums
     ''' </summary>
     ''' <remarks></remarks>
     Public Enum TrailerAudioCodec As Integer
-        MP4 = 0
-        WebM = 1
-        UNKNOWN = 99
+        AAC = 0
+        AAC_SPATIAL = 1
+        AC3_SPATIAL = 2
+        DTSE_SPATIAL = 3
+        EC3_SPATIAL = 4
+        Opus = 5
+        Opus_SPATIAL = 6
+        Vorbis = 7
+        Vorbis_SPATIAL = 8
+        UNKNOWN = 9
+        Any = 99
     End Enum
     ''' <summary>
     ''' Enum representing the trailer quality options
     ''' </summary>
     ''' <remarks></remarks>
     Public Enum TrailerAudioQuality As Integer
-        AAC256kbps = 0
-        AAC128kbps = 1
-        AAC48kbps = 2
-        Vorbis192kbps = 3
-        Vorbis128kbps = 4
-        UNKNOWN = 5
+        Q512kbps = 0
+        Q384kbps = 1
+        Q256kbps = 2
+        Q192kbps = 3
+        Q128kbps = 4
+        Q64kbps = 5
+        Q48kbps = 6
+        UNKNOWN = 7
         Any = 99
     End Enum
     ''' <summary>
@@ -1000,10 +1016,12 @@ Public Class Enums
     ''' </summary>
     ''' <remarks></remarks>
     Public Enum TrailerVideoCodec As Integer
-        MP4 = 0
-        WebM = 1
-        v3GP = 2
-        FLV = 3
+        H264 = 0
+        VP9 = 1
+        H263 = 2
+        VP8 = 3
+        VP9_HDR = 4
+        AV1 = 5
         UNKNOWN = 4
     End Enum
     ''' <summary>
@@ -1013,17 +1031,18 @@ Public Class Enums
     Public Enum TrailerVideoQuality As Integer
         HD2160p = 0
         HD2160p60fps = 1
-        HD1440p = 2
-        HD1080p = 3
-        HD1080p60fps = 4
-        HD720p = 5
-        HD720p60fps = 6
-        HQ480p = 7 'or 576 for 4:3 media
-        SQ360p = 8
-        SQ240p = 9 'or 270
-        SQ144p = 10
-        SQ144p15fps = 11
-        UNKNOWN = 12
+        HD1440p60fps = 2
+        HD1440p = 3
+        HD1080p = 4
+        HD1080p60fps = 5
+        HD720p = 6
+        HD720p60fps = 7
+        HQ480p = 8 'or 576 for 4:3 media
+        SQ360p = 9
+        SQ240p = 10 'or 270
+        SQ144p = 11
+        SQ144p15fps = 12
+        UNKNOWN = 13
         Any = 99
     End Enum
 
@@ -1146,16 +1165,16 @@ Public Class Functions
     ''' <returns>A value representing the DateTime as a unix-style timestamp <c>Double</c></returns>
     ''' <remarks></remarks>
     Public Shared Function ConvertToUnixTimestamp(ByVal data As DateTime) As Double
-        Dim origin As DateTime = New DateTime(1970, 1, 1, 0, 0, 0, 0)
-        Dim diff As System.TimeSpan = data - origin
+        Dim origin As Date = New DateTime(1970, 1, 1, 0, 0, 0, 0)
+        Dim diff As TimeSpan = data - origin
         Return Math.Floor(diff.TotalSeconds)
     End Function
 
     Public Shared Function ConvertToProperDateTime(ByVal strDateTime As String) As String
         If String.IsNullOrEmpty(strDateTime) Then Return String.Empty
 
-        Dim parsedDateTime As DateTime
-        If DateTime.TryParse(strDateTime, parsedDateTime) Then
+        Dim parsedDateTime As Date
+        If Date.TryParse(strDateTime, parsedDateTime) Then
             Return parsedDateTime.ToString("yyyy-MM-dd HH:mm:ss")
         Else
             Return String.Empty
@@ -1168,7 +1187,6 @@ Public Class Functions
     ''' </summary>
     ''' <remarks></remarks>
     Public Shared Sub CreateDefaultOptions()
-        'TODO need proper unit test
         With Master.DefaultOptions_Movie
             .bMainActors = Master.eSettings.MovieScraperCast
             .bMainCertifications = Master.eSettings.MovieScraperCert
@@ -1188,6 +1206,7 @@ Public Class Functions
             .bMainTitle = Master.eSettings.MovieScraperTitle
             .bMainTop250 = Master.eSettings.MovieScraperTop250
             .bMainTrailer = Master.eSettings.MovieScraperTrailer
+            .bMainUserRating = Master.eSettings.MovieScraperUserRating
             .bMainWriters = Master.eSettings.MovieScraperCredits
             .bMainYear = Master.eSettings.MovieScraperYear
         End With
@@ -1207,6 +1226,7 @@ Public Class Functions
             .bEpisodeRating = Master.eSettings.TVScraperEpisodeRating
             .bEpisodeRuntime = Master.eSettings.TVScraperEpisodeRuntime
             .bEpisodeTitle = Master.eSettings.TVScraperEpisodeTitle
+            .bEpisodeUserRating = Master.eSettings.TVScraperEpisodeUserRating
             .bMainActors = Master.eSettings.TVScraperShowActors
             .bMainCertifications = Master.eSettings.TVScraperShowCert
             .bMainCountries = Master.eSettings.TVScraperShowCountry
@@ -1222,6 +1242,7 @@ Public Class Functions
             .bMainStatus = Master.eSettings.TVScraperShowStatus
             .bMainStudios = Master.eSettings.TVScraperShowStudio
             .bMainTitle = Master.eSettings.TVScraperShowTitle
+            .bMainUserRating = Master.eSettings.TVScraperShowUserRating
             .bSeasonAired = Master.eSettings.TVScraperSeasonAired
             .bSeasonPlot = Master.eSettings.TVScraperSeasonPlot
             .bSeasonTitle = Master.eSettings.TVScraperSeasonTitle
@@ -1361,21 +1382,6 @@ Public Class Functions
             Return "ffprobe"
         End If
     End Function
-
-    ''' <summary>
-    ''' Populate Master.SourcesList with a list of paths to all (media?) sources stored in the database
-    ''' </summary>
-    Public Shared Sub GetListOfSources()
-        Master.SourcesList.Clear()
-        Using SQLcommand As SQLite.SQLiteCommand = Master.DB.MyVideosDBConn.CreateCommand()
-            SQLcommand.CommandText = "SELECT strPath FROM moviesource;"
-            Using SQLreader As SQLite.SQLiteDataReader = SQLcommand.ExecuteReader()
-                While SQLreader.Read
-                    Master.SourcesList.Add(SQLreader("strPath").ToString)
-                End While
-            End Using
-        End Using
-    End Sub
     ''' <summary>
     ''' Determines the path to the desired season of a given show
     ''' </summary>
@@ -1407,41 +1413,6 @@ Public Class Functions
         End If
         'no matches
         Return String.Empty
-    End Function
-
-    Public Shared Function GetWindowsClientVersion() As String
-        Dim major As Integer = System.Environment.OSVersion.Version.Major
-        Dim minor As Integer = System.Environment.OSVersion.Version.Minor
-        Dim build As Integer = System.Environment.OSVersion.Version.Build
-        If major = 4 AndAlso minor = 0 AndAlso build = 950 Then
-            Return "Win95 Release 1"
-        ElseIf major = 4 AndAlso minor = 0 AndAlso build = 1111 Then
-            Return "Win95 Release 2"
-        ElseIf major = 4 AndAlso minor = 3 AndAlso (build = 1212 OrElse build = 1213 OrElse build = 1214) Then
-            Return "Win95 Release 2.1"
-        ElseIf major = 4 AndAlso minor = 10 AndAlso build = 1998 Then
-            Return "Win98"
-        ElseIf major = 4 AndAlso minor = 10 AndAlso build = 2222 Then
-            Return "Win98 Second Edition"
-        ElseIf major = 4 AndAlso minor = 90 Then
-            Return "WinMe"
-        ElseIf major = 5 AndAlso minor = 0 Then
-            Return "Win2000"
-        ElseIf major = 5 AndAlso minor = 1 AndAlso build = 2600 Then
-            Return "WinXP"
-        ElseIf major = 6 AndAlso minor = 0 Then
-            Return "Vista"
-        ElseIf major = 6 AndAlso minor = 1 Then
-            Return "Win7"
-        ElseIf major = 6 AndAlso minor = 2 AndAlso build = 9200 Then
-            Return "Win8"
-        ElseIf major = 6 AndAlso minor = 2 AndAlso build = 9600 Then
-            Return "Win8"
-        ElseIf major = 10 AndAlso minor = 0 AndAlso build = 10240 Then
-            Return "Win10"
-        Else
-            Return "Can not find os version."
-        End If
     End Function
     ''' <summary>
     ''' Determine whether the supplied path is already defined as a TV Show season subdirectory
@@ -1535,6 +1506,7 @@ Public Class Functions
         FilteredOptions.bEpisodeRating = Options.bEpisodeRating AndAlso Options2.bEpisodeRating
         FilteredOptions.bEpisodeRuntime = Options.bEpisodeRuntime AndAlso Options2.bEpisodeRuntime
         FilteredOptions.bEpisodeTitle = Options.bEpisodeTitle AndAlso Options2.bEpisodeTitle
+        FilteredOptions.bEpisodeUserRating = Options.bEpisodeUserRating AndAlso Options2.bEpisodeUserRating
         FilteredOptions.bMainActors = Options.bMainActors AndAlso Options2.bMainActors
         FilteredOptions.bMainCertifications = Options.bMainCertifications AndAlso Options2.bMainCertifications
         FilteredOptions.bMainCollectionID = Options.bMainCollectionID AndAlso Options2.bMainCollectionID
@@ -1557,6 +1529,7 @@ Public Class Functions
         FilteredOptions.bMainTitle = Options.bMainTitle AndAlso Options2.bMainTitle
         FilteredOptions.bMainTop250 = Options.bMainTop250 AndAlso Options2.bMainTop250
         FilteredOptions.bMainTrailer = Options.bMainTrailer AndAlso Options2.bMainTrailer
+        FilteredOptions.bMainUserRating = Options.bMainUserRating AndAlso Options2.bMainUserRating
         FilteredOptions.bMainWriters = Options.bMainWriters AndAlso Options2.bMainWriters
         FilteredOptions.bMainYear = Options.bMainYear AndAlso Options2.bMainYear
         FilteredOptions.bSeasonAired = Options.bSeasonAired AndAlso Options2.bSeasonAired
@@ -1603,6 +1576,48 @@ Public Class Functions
         FilteredModifiers.withEpisodes = Options.withEpisodes AndAlso Options2.withEpisodes
         FilteredModifiers.withSeasons = Options.withSeasons AndAlso Options2.withSeasons
         Return FilteredModifiers
+    End Function
+
+    Public Shared Function ScrapeModifiersAnyEnabled(ByVal Options As Structures.ScrapeModifiers) As Boolean
+        With Options
+            If .AllSeasonsBanner OrElse
+                .AllSeasonsFanart OrElse
+                .AllSeasonsLandscape OrElse
+                .AllSeasonsPoster OrElse
+                .EpisodeActorThumbs OrElse
+                .EpisodeFanart OrElse
+                .EpisodeMeta OrElse
+                .EpisodeNFO OrElse
+                .EpisodePoster OrElse
+                .EpisodeSubtitles OrElse
+                .EpisodeWatchedFile OrElse
+                .MainActorthumbs OrElse
+                .MainBanner OrElse
+                .MainCharacterArt OrElse
+                .MainClearArt OrElse
+                .MainClearLogo OrElse
+                .MainDiscArt OrElse
+                .MainExtrafanarts OrElse
+                .MainExtrathumbs OrElse
+                .MainFanart OrElse
+                .MainLandscape OrElse
+                .MainMeta OrElse
+                .MainNFO OrElse
+                .MainPoster OrElse
+                .MainSubtitles OrElse
+                .MainTheme OrElse
+                .MainTrailer OrElse
+                .MainWatchedFile OrElse
+                .SeasonBanner OrElse
+                .SeasonFanart OrElse
+                .SeasonLandscape OrElse
+                .SeasonNFO OrElse
+                .SeasonPoster Then
+                Return True
+            End If
+        End With
+
+        Return False
     End Function
 
     Public Shared Sub SetScrapeModifiers(ByRef ScrapeModifiers As Structures.ScrapeModifiers, ByVal MType As Enums.ModifierType, ByVal MValue As Boolean)
@@ -1930,7 +1945,7 @@ Public Class Structures
     ''' Structure representing posible scrape fields
     ''' </summary>
     ''' <remarks></remarks>
-    <Serializable()> _
+    <Serializable()>
     Public Structure ScrapeOptions
         Dim bEpisodeActors As Boolean
         Dim bEpisodeAired As Boolean
@@ -1941,9 +1956,12 @@ Public Class Structures
         Dim bEpisodeRating As Boolean
         Dim bEpisodeRuntime As Boolean
         Dim bEpisodeTitle As Boolean
+        Dim bEpisodeUserRating As Boolean
+        Dim bEpisodeVideoSource As Boolean
         Dim bMainActors As Boolean
         Dim bMainCertifications As Boolean
         Dim bMainCollectionID As Boolean
+        Dim bMainCountries As Boolean
         Dim bMainCreators As Boolean
         Dim bMainDirectors As Boolean
         Dim bMainEpisodeGuide As Boolean
@@ -1959,11 +1977,12 @@ Public Class Structures
         Dim bMainStatus As Boolean
         Dim bMainStudios As Boolean
         Dim bMainTagline As Boolean
+        Dim bMainTags As Boolean
         Dim bMainTitle As Boolean
         Dim bMainTop250 As Boolean
-        Dim bMainCountries As Boolean
-        Dim bMainTags As Boolean
         Dim bMainTrailer As Boolean
+        Dim bMainUserRating As Boolean
+        Dim bMainVideoSource As Boolean
         Dim bMainWriters As Boolean
         Dim bMainYear As Boolean
         Dim bSeasonAired As Boolean

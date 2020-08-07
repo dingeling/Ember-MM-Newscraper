@@ -26,17 +26,16 @@ Public Class dlgTMDBSearchResults_MovieSet
 
 #Region "Fields"
     Shared logger As Logger = LogManager.GetCurrentClassLogger()
+
     Friend WithEvents bwDownloadPic As New System.ComponentModel.BackgroundWorker
     Friend WithEvents tmrLoad As New Timer
     Friend WithEvents tmrWait As New Timer
 
-    Private _TMDB As TMDB.Scraper
+    Private _TMDB As Scraper
     Private sHTTP As New HTTP
     Private _currnode As Integer = -1
     Private _prevnode As Integer = -2
     Private _SpecialSettings As TMDB_Data.SpecialSettings
-    'Private TMDBConf As V3.TmdbConfiguration
-    'Private TMDBApi As V3.Tmdb
 
     Private _InfoCache As New Dictionary(Of String, MediaContainers.MovieSet)
     Private _PosterCache As New Dictionary(Of String, Image)
@@ -58,7 +57,7 @@ Public Class dlgTMDBSearchResults_MovieSet
 
 #Region "Methods"
 
-    Public Sub New(ByVal SpecialSettings As TMDB_Data.SpecialSettings, TMDB As TMDB.Scraper)
+    Public Sub New(ByVal SpecialSettings As TMDB_Data.SpecialSettings, TMDB As Scraper)
 
         ' This call is required by the designer.
         InitializeComponent()
@@ -86,7 +85,7 @@ Public Class dlgTMDBSearchResults_MovieSet
         Return ShowDialog()
     End Function
 
-    Public Overloads Function ShowDialog(Res As TMDB.SearchResults_MovieSet, ByVal sMovieSetTitle As String) As DialogResult
+    Public Overloads Function ShowDialog(Res As SearchResults_MovieSet, ByVal sMovieSetTitle As String) As DialogResult
         tmrWait.Enabled = False
         tmrWait.Interval = 250
         tmrLoad.Enabled = False
@@ -120,7 +119,7 @@ Public Class dlgTMDBSearchResults_MovieSet
         Dim pOpt As New Structures.ScrapeOptions
         pOpt = SetPreviewOptions()
         '' The rule is that if there is a tt is an IMDB otherwise is a TMDB
-        _TMDB.GetSearchMovieSetInfoAsync(txtTMDBID.Text, _tmpMovieSet, pOpt)
+        _TMDB.GetSearchMovieSetInfoAsync(txtTMDBID.Text, pOpt)
     End Sub
 
     Private Sub bwDownloadPic_DoWork(ByVal sender As Object, ByVal e As System.ComponentModel.DoWorkEventArgs) Handles bwDownloadPic.DoWork
@@ -270,7 +269,7 @@ Public Class dlgTMDBSearchResults_MovieSet
         End If
     End Sub
 
-    Private Sub SearchResultsDownloaded_MovieSet(ByVal M As TMDB.SearchResults_MovieSet)
+    Private Sub SearchResultsDownloaded_MovieSet(ByVal M As SearchResults_MovieSet)
         tvResults.Nodes.Clear()
         ClearInfo()
         If M IsNot Nothing AndAlso M.Matches.Count > 0 Then
@@ -318,7 +317,7 @@ Public Class dlgTMDBSearchResults_MovieSet
         pnlLoading.Visible = True
         Label3.Text = Master.eLang.GetString(875, "Downloading details...")
 
-        _TMDB.GetSearchMovieSetInfoAsync(tvResults.SelectedNode.Tag.ToString, _tmpMovieSet, pOpt)
+        _TMDB.GetSearchMovieSetInfoAsync(tvResults.SelectedNode.Tag.ToString, pOpt)
     End Sub
 
     Private Sub tmrWait_Tick(ByVal sender As Object, ByVal e As EventArgs) Handles tmrWait.Tick

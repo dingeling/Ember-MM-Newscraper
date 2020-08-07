@@ -32,7 +32,7 @@ Public Class dlgIMDBSearchResults_TV
     Friend WithEvents tmrLoad As New Timer
     Friend WithEvents tmrWait As New Timer
 
-    Private _IMDB As IMDB.Scraper
+    Private _IMDB As Scraper
     Private sHTTP As New HTTP
     Private _currnode As Integer = -1
     Private _prevnode As Integer = -2
@@ -59,7 +59,7 @@ Public Class dlgIMDBSearchResults_TV
 
 #Region "Methods"
 
-    Public Sub New(ByVal SpecialSettings As IMDB_Data.SpecialSettings, ByRef IMDB As IMDB.Scraper)
+    Public Sub New(ByVal SpecialSettings As IMDB_Data.SpecialSettings, ByRef IMDB As Scraper)
         ' This call is required by the designer.
         InitializeComponent()
         Left = Master.AppPos.Left + (Master.AppPos.Width - Width) \ 2
@@ -92,7 +92,7 @@ Public Class dlgIMDBSearchResults_TV
         Return ShowDialog()
     End Function
 
-    Public Overloads Function ShowDialog(ByVal Res As IMDB.SearchResults_TVShow, ByVal sShowTitle As String, ByVal sShowPath As String) As Windows.Forms.DialogResult
+    Public Overloads Function ShowDialog(ByVal Res As SearchResults_TVShow, ByVal sShowTitle As String, ByVal sShowPath As String) As Windows.Forms.DialogResult
         tmrWait.Enabled = False
         tmrWait.Interval = 250
         tmrLoad.Enabled = False
@@ -126,10 +126,10 @@ Public Class dlgIMDBSearchResults_TV
     Private Sub btnVerify_Click(ByVal sender As Object, ByVal e As EventArgs) Handles btnVerify.Click
         Dim pOpt As New Structures.ScrapeOptions
         pOpt = SetPreviewOptions()
-        If Regex.IsMatch(txtIMDBID.Text.Replace("tt", String.Empty), "\d\d\d\d\d\d\d") Then
+        If Regex.IsMatch(txtIMDBID.Text.Trim, "tt\d\d\d\d\d\d\d") Then
             pnlLoading.Visible = True
             _IMDB.CancelAsync()
-            _IMDB.GetSearchTVShowInfoAsync(txtIMDBID.Text.Replace("tt", String.Empty), _tmpTVShow, pOpt)
+            _IMDB.GetSearchTVShowInfoAsync(txtIMDBID.Text.Trim, pOpt)
         Else
             MessageBox.Show(Master.eLang.GetString(799, "The ID you entered is not a valid IMDB ID."), Master.eLang.GetString(292, "Invalid Entry"), MessageBoxButtons.OK, MessageBoxIcon.Exclamation)
         End If
@@ -205,7 +205,6 @@ Public Class dlgIMDBSearchResults_TV
         ControlsVisible(False)
         lblTitle.Text = String.Empty
         lblTagline.Text = String.Empty
-        lblPremiered.Text = String.Empty
         lblCreators.Text = String.Empty
         lblGenre.Text = String.Empty
         txtPlot.Text = String.Empty
@@ -218,13 +217,11 @@ Public Class dlgIMDBSearchResults_TV
     End Sub
 
     Private Sub ControlsVisible(ByVal areVisible As Boolean)
-        lblPremieredHeader.Visible = areVisible
         lblCreatorsHeader.Visible = areVisible
         lblGenreHeader.Visible = areVisible
         lblPlotHeader.Visible = areVisible
         lblIMDBHeader.Visible = areVisible
         txtPlot.Visible = areVisible
-        lblPremiered.Visible = areVisible
         lblTagline.Visible = areVisible
         lblTitle.Visible = areVisible
         lblCreators.Visible = areVisible
@@ -285,7 +282,6 @@ Public Class dlgIMDBSearchResults_TV
             _tmpTVShow = sInfo
             lblTitle.Text = _tmpTVShow.Title
             lblTagline.Text = String.Empty
-            lblPremiered.Text = _tmpTVShow.Premiered
             lblCreators.Text = String.Join(" / ", _tmpTVShow.Creators)
             lblGenre.Text = String.Join(" / ", _tmpTVShow.Genres.ToArray)
             txtPlot.Text = _tmpTVShow.Plot
@@ -323,7 +319,7 @@ Public Class dlgIMDBSearchResults_TV
         End If
     End Sub
 
-    Private Sub SearchResultsDownloaded(ByVal M As IMDB.SearchResults_TVShow)
+    Private Sub SearchResultsDownloaded(ByVal M As SearchResults_TVShow)
         tvResults.Nodes.Clear()
         ClearInfo()
         If M IsNot Nothing AndAlso M.Matches.Count > 0 Then
@@ -347,7 +343,6 @@ Public Class dlgIMDBSearchResults_TV
         aOpt.bMainCreators = True
         aOpt.bMainGenres = True
         aOpt.bMainPlot = True
-        aOpt.bMainPremiered = True
         aOpt.bMainTitle = True
 
         Return aOpt
@@ -356,15 +351,14 @@ Public Class dlgIMDBSearchResults_TV
     Private Sub SetUp()
         OK_Button.Text = Master.eLang.GetString(179, "OK")
         Cancel_Button.Text = Master.eLang.GetString(167, "Cancel")
-        Label2.Text = Master.eLang.GetString(836, "View details of each result to find the proper movie.")
+        Label2.Text = Master.eLang.GetString(951, "View details of each result to find the proper TV show.")
         Label1.Text = Master.eLang.GetString(948, "TV Search Results")
         chkManual.Text = Master.eLang.GetString(847, "Manual IMDB Entry:")
         btnVerify.Text = Master.eLang.GetString(848, "Verify")
         lblCreatorsHeader.Text = String.Concat(Master.eLang.GetString(744, "Creators"), ":")
-        lblPremieredHeader.Text = String.Concat(Master.eLang.GetString(724, "Premiered"), ":")
-        lblGenreHeader.Text = Master.eLang.GetString(51, "Genre(s):")
+        lblGenreHeader.Text = String.Concat(Master.eLang.GetString(725, "Genres"), ":")
         lblIMDBHeader.Text = Master.eLang.GetString(873, "IMDB ID:")
-        lblPlotHeader.Text = Master.eLang.GetString(242, "Plot Outline:")
+        lblPlotHeader.Text = String.Concat(Master.eLang.GetString(65, "Plot"), ":")
         Label3.Text = Master.eLang.GetString(798, "Searching IMDB...")
     End Sub
 
@@ -377,7 +371,7 @@ Public Class dlgIMDBSearchResults_TV
         pnlLoading.Visible = True
         Label3.Text = Master.eLang.GetString(875, "Downloading details...")
 
-        _IMDB.GetSearchTVShowInfoAsync(tvResults.SelectedNode.Tag.ToString, _tmpTVShow, pOpt)
+        _IMDB.GetSearchTVShowInfoAsync(tvResults.SelectedNode.Tag.ToString, pOpt)
     End Sub
 
     Private Sub tmrWait_Tick(ByVal sender As Object, ByVal e As EventArgs) Handles tmrWait.Tick

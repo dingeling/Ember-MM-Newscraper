@@ -104,6 +104,15 @@ Public Class StringUtils
         Return name.Trim
     End Function
 
+    Public Shared Function BuildGenericTitle_TVEpisode(ByVal tDBElement As Database.DBElement) As String
+        If tDBElement Is Nothing OrElse Not tDBElement.ContentType = Enums.ContentType.TVEpisode Then Return String.Empty
+        Return String.Format("{0} S{1}E{2}{3}",
+                             tDBElement.TVShow.Title,
+                             tDBElement.TVEpisode.Season.ToString.PadLeft(2, Convert.ToChar("0")),
+                             tDBElement.TVEpisode.Episode.ToString.PadLeft(2, Convert.ToChar("0")),
+                             If(tDBElement.TVEpisode.SubEpisodeSpecified, String.Concat(".", tDBElement.TVEpisode.SubEpisode), String.Empty))
+    End Function
+
     Public Shared Function GenreFilter(ByRef aGenres As List(Of String), Optional ByVal addNewGenres As Boolean = True) As Boolean
         Dim nGernes As New List(Of String)
 
@@ -121,7 +130,6 @@ Public Class StringUtils
                     'add a new mapping if tGenre is not in the Mappings list
                     APIXML.GenreXML.Mappings.Add(New genreMapping With {.MappedTo = New List(Of String) From {tGenre}, .SearchString = tGenre})
                     nGernes.Add(tGenre)
-                    APIXML.GenreXML.Save()
                 End If
             Next
         End If
@@ -227,8 +235,9 @@ Public Class StringUtils
     End Function
 
     Public Shared Function ConvertFromYouTubeURLToKodiTrailerFormat(ByVal strURL As String) As String
-        If String.IsNullOrEmpty(strURL) Then Return String.Empty
-        Return String.Concat("plugin://plugin.video.youtube/?action=play_video&videoid=", YouTube.UrlUtils.GetVideoID(strURL))
+        Dim strID As String = String.Empty
+        If String.IsNullOrEmpty(strURL) OrElse Not YouTube.UrlUtils.GetVideoIDFromURL(strURL, strID) Then Return String.Empty
+        Return String.Concat("plugin://plugin.video.youtube/?action=play_video&videoid=", strID)
     End Function
     ''' <summary>
     ''' Converts the supplied <c>String</c> to title-case, and converts certain keywords to uppercase
@@ -378,12 +387,6 @@ Public Class StringUtils
         Next
         Return Result
     End Function
-
-    Public Shared Function FilterIMDBIDFromPath(ByVal strPath As String, Optional ByVal bRightToLeft As Boolean = False) As String
-        If String.IsNullOrEmpty(strPath) Then Return String.Empty
-
-        Return Regex.Match(strPath, "tt\d{6}\d*", If(bRightToLeft, RegexOptions.RightToLeft, RegexOptions.None)).Value.Trim
-    End Function
     ''' <summary>
     ''' Cleans up a movie path by stripping it down to the basic title with no additional decorations.
     ''' </summary>
@@ -519,21 +522,27 @@ Public Class StringUtils
     ''' <summary>
     ''' For a given <c>Integer</c> season number, determine the appropriate season text
     ''' </summary>
-    ''' <param name="sSeason"><c>Integer</c> season value. Valid values are 0 or higher. Negatives evaluate to Unknonw</param>
+    ''' <param name="iSeason"><c>Integer</c> season value. Valid values are -1 or higher.</param>
     ''' <returns><c>String</c> title appropriate for the season</returns>
-    ''' <remarks>For <paramref name="sSeason"/> greater than 0, evaluates to (regional equivalent of) "Season XX" where XX is a 0-padded number.
+    ''' <remarks>For <paramref name="iSeason"/> greater than 0, evaluates to (regional equivalent of) "Season XX" where XX is a 0-padded number.
     ''' For 0, returns equivalent of "Season Specials".
-    ''' For less than 0, returns equivalent of "Unknown"</remarks>
-    Public Shared Function FormatSeasonText(ByVal sSeason As Integer) As String
-        If sSeason > 0 AndAlso sSeason <> 999 Then
-            Return String.Concat(Master.eLang.GetString(650, "Season"), " ", sSeason.ToString.PadLeft(2, Convert.ToChar("0")))
-        ElseIf sSeason = 0 Then
+    ''' For -1, returns equivalent of "* All Seasons".
+    ''' For less than -1, returns equivalent of "Unknown"</remarks>
+    Public Shared Function FormatSeasonText(ByVal iSeason As Integer) As String
+        If iSeason > 0 Then
+            Return String.Concat(Master.eLang.GetString(650, "Season"), " ", iSeason.ToString.PadLeft(2, Convert.ToChar("0")))
+        ElseIf iSeason = 0 Then
             Return Master.eLang.GetString(655, "Season Specials")
-        ElseIf sSeason = 999 Then
+        ElseIf iSeason = -1 Then
             Return Master.eLang.GetString(1256, "* All Seasons")
         Else
             Return Master.eLang.GetString(138, "Unknown")
         End If
+    End Function
+
+    Public Shared Function GetIMDBIDFromString(ByVal text As String, Optional ByVal searchrighttoleft As Boolean = False) As String
+        If String.IsNullOrEmpty(text) Then Return String.Empty
+        Return Regex.Match(text, "tt\d{6}\d*", If(searchrighttoleft, RegexOptions.RightToLeft, RegexOptions.None)).Value.Trim
     End Function
     ''' <summary>
     ''' Converts a string to an HTML-encoded string.
@@ -689,6 +698,24 @@ Public Class StringUtils
         End Try
         Return sReturn.Trim
     End Function
+
+    Public Shared Function SecondsToDuration(ByVal seconds As String) As String
+        Dim dblSeconds As Double
+        If Double.TryParse(seconds, dblSeconds) Then
+            Dim tsDuration = TimeSpan.FromSeconds(dblSeconds)
+            Dim dDuration = New Date(tsDuration.Ticks)
+            Dim strDuration As String = String.Empty
+            Select Case True
+                Case tsDuration.Days > 0
+                    Return tsDuration.ToString("dd\.hh\:mm\:ss")
+                Case tsDuration.Hours > 0
+                    Return tsDuration.ToString("hh\:mm\:ss")
+                Case tsDuration.Minutes > 0 OrElse tsDuration.Seconds > 0
+                    Return tsDuration.ToString("m\:ss")
+            End Select
+        End If
+        Return String.Empty
+    End Function
     ''' <summary>
     ''' Shortens the given <paramref name="fOutline"/> such that it is not longer than <paramref name="fLimit"/>.
     ''' </summary>
@@ -740,12 +767,26 @@ Public Class StringUtils
 
         Return String.Concat(nOutline.Substring(0, lastPeriod + 1), "..") 'Note only 2 periods required, since one is already there
     End Function
+
+    Private Shared Function SortTokens(ByVal strTitle As String, ByVal lstTokenList As List(Of String)) As String
+        For Each strToken As String In lstTokenList
+            Try
+                Dim mToken As Match = Regex.Match(strTitle, String.Concat("(^", strToken, ")(.*)"), RegexOptions.IgnoreCase)
+                If mToken.Success AndAlso mToken.Groups.Count = 3 Then
+                    Return String.Format("{0}, {1}", mToken.Groups(2).Value.Trim, mToken.Groups(1).Value.Trim)
+                End If
+            Catch ex As Exception
+                logger.Error(ex, New StackFrame().GetMethod().Name & Convert.ToChar(Windows.Forms.Keys.Tab) & "Title: " & strTitle & " generated an error message")
+            End Try
+        Next
+        Return strTitle
+    End Function
     ''' <summary>
     ''' Scan the <c>String</c> title provided, and if it starts with one of the pre-defined
     ''' sort tokens (<c>Master.eSettings.MovieSortTokens"</c>) then remove it from the front
     ''' of the string and move it to the end after a comma.
     ''' </summary>
-    ''' <param name="sTitle"><c>String</c> to clean up</param>
+    ''' <param name="strTitle"><c>String</c> to clean up</param>
     ''' <returns><c>String</c> with any defined sort tokens moved to the end</returns>
     ''' <remarks>This function will take a string such as "The Movie" and return "Movie, The".
     ''' The default tokens are:
@@ -755,45 +796,15 @@ Public Class StringUtils
     '''    <item>the</item>
     ''' </list>
     ''' Once the first token is found and moved, no further search is made for other tokens.</remarks>
-    Public Shared Function SortTokens_Movie(ByVal sTitle As String) As String
-        If String.IsNullOrEmpty(sTitle) Then Return String.Empty
-        Dim newTitle As String = sTitle
-
-        If Master.eSettings.MovieSortTokens.Count > 0 Then
-            Dim tokenContents As String
-            Dim onlyTokenFromTitle As Match
-            Dim titleWithoutToken As String
-            For Each sToken As String In Master.eSettings.MovieSortTokens
-                Try
-                    If Regex.IsMatch(sTitle, String.Concat("^", sToken), RegexOptions.IgnoreCase) Then
-                        tokenContents = Regex.Replace(sToken, "\[(.*?)\]", String.Empty)
-
-                        onlyTokenFromTitle = Regex.Match(sTitle, String.Concat("^", tokenContents), RegexOptions.IgnoreCase)
-
-                        'cocotus 20140207, Fix for movies like "A.C.O.D." -> check for tokenContents(="A","An","the"..) followed by whitespace at the start of title -> If no space -> don't do anyn filtering!
-                        If sTitle.ToLower.StartsWith(tokenContents.ToLower & " ") = False Then
-                            Exit For
-                        End If
-
-                        titleWithoutToken = Regex.Replace(sTitle, String.Concat("^", sToken), String.Empty, RegexOptions.IgnoreCase).Trim
-                        newTitle = String.Format("{0}, {1}", titleWithoutToken, onlyTokenFromTitle.Value).Trim
-
-                        'newTitle = String.Format("{0}, {1}", Regex.Replace(sTitle, String.Concat("^", sToken), String.Empty, RegexOptions.IgnoreCase).Trim, Regex.Match(sTitle, String.Concat("^", Regex.Replace(sToken, "\[(.*?)\]", String.Empty)), RegexOptions.IgnoreCase)).Trim
-                        Exit For
-                    End If
-                Catch ex As Exception
-                    logger.Error(ex, New StackFrame().GetMethod().Name & Convert.ToChar(Windows.Forms.Keys.Tab) & "Title: " & sTitle & " generated an error message")
-                End Try
-            Next
-        End If
-        Return newTitle.Trim
+    Public Shared Function SortTokens_Movie(ByVal strTitle As String) As String
+        Return SortTokens(strTitle, Master.eSettings.MovieSortTokens)
     End Function
     ''' <summary>
     ''' Scan the <c>String</c> title provided, and if it starts with one of the pre-defined
     ''' sort tokens (<c>Master.eSettings.MovieSetSortTokens"</c>) then remove it from the front
     ''' of the string and move it to the end after a comma.
     ''' </summary>
-    ''' <param name="sTitle"><c>String</c> to clean up</param>
+    ''' <param name="strTitle"><c>String</c> to clean up</param>
     ''' <returns><c>String</c> with any defined sort tokens moved to the end</returns>
     ''' <remarks>This function will take a string such as "The MovieSet" and return "MovieSet, The".
     ''' The default tokens are:
@@ -803,45 +814,15 @@ Public Class StringUtils
     '''    <item>the</item>
     ''' </list>
     ''' Once the first token is found and moved, no further search is made for other tokens.</remarks>
-    Public Shared Function SortTokens_MovieSet(ByVal sTitle As String) As String
-        If String.IsNullOrEmpty(sTitle) Then Return String.Empty
-        Dim newTitle As String = sTitle
-
-        If Master.eSettings.MovieSetSortTokens.Count > 0 Then
-            Dim tokenContents As String
-            Dim onlyTokenFromTitle As Match
-            Dim titleWithoutToken As String
-            For Each sToken As String In Master.eSettings.MovieSetSortTokens
-                Try
-                    If Regex.IsMatch(sTitle, String.Concat("^", sToken), RegexOptions.IgnoreCase) Then
-                        tokenContents = Regex.Replace(sToken, "\[(.*?)\]", String.Empty)
-
-                        onlyTokenFromTitle = Regex.Match(sTitle, String.Concat("^", tokenContents), RegexOptions.IgnoreCase)
-
-                        'cocotus 20140207, Fix for movies like "A.C.O.D." -> check for tokenContents(="A","An","the"..) followed by whitespace at the start of title -> If no space -> don't do anyn filtering!
-                        If sTitle.ToLower.StartsWith(tokenContents.ToLower & " ") = False Then
-                            Exit For
-                        End If
-
-                        titleWithoutToken = Regex.Replace(sTitle, String.Concat("^", sToken), String.Empty, RegexOptions.IgnoreCase).Trim
-                        newTitle = String.Format("{0}, {1}", titleWithoutToken, onlyTokenFromTitle.Value).Trim
-
-                        'newTitle = String.Format("{0}, {1}", Regex.Replace(sTitle, String.Concat("^", sToken), String.Empty, RegexOptions.IgnoreCase).Trim, Regex.Match(sTitle, String.Concat("^", Regex.Replace(sToken, "\[(.*?)\]", String.Empty)), RegexOptions.IgnoreCase)).Trim
-                        Exit For
-                    End If
-                Catch ex As Exception
-                    logger.Error(ex, New StackFrame().GetMethod().Name & Convert.ToChar(Windows.Forms.Keys.Tab) & "Title: " & sTitle & " generated an error message")
-                End Try
-            Next
-        End If
-        Return newTitle.Trim
+    Public Shared Function SortTokens_MovieSet(ByVal strTitle As String) As String
+        Return SortTokens(strTitle, Master.eSettings.MovieSetSortTokens)
     End Function
     ''' <summary>
     ''' Scan the <c>String</c> title provided, and if it starts with one of the pre-defined
     ''' sort tokens (<c>Master.eSettings.SortTokens"</c>) then remove it from the front
     ''' of the string and move it to the end after a comma.
     ''' </summary>
-    ''' <param name="sTitle"><c>String</c> to clean up</param>
+    ''' <param name="strTitle"><c>String</c> to clean up</param>
     ''' <returns><c>String</c> with any defined sort tokens moved to the end</returns>
     ''' <remarks>This function will take a string such as "The Show" and return "Show, The".
     ''' The default tokens are:
@@ -851,38 +832,8 @@ Public Class StringUtils
     '''    <item>the</item>
     ''' </list>
     ''' Once the first token is found and moved, no further search is made for other tokens.</remarks>
-    Public Shared Function SortTokens_TV(ByVal sTitle As String) As String
-        If String.IsNullOrEmpty(sTitle) Then Return String.Empty
-        Dim newTitle As String = sTitle
-
-        If Master.eSettings.TVSortTokens.Count > 0 Then
-            Dim tokenContents As String
-            Dim onlyTokenFromTitle As Match
-            Dim titleWithoutToken As String
-            For Each sToken As String In Master.eSettings.TVSortTokens
-                Try
-                    If Regex.IsMatch(sTitle, String.Concat("^", sToken), RegexOptions.IgnoreCase) Then
-                        tokenContents = Regex.Replace(sToken, "\[(.*?)\]", String.Empty)
-
-                        onlyTokenFromTitle = Regex.Match(sTitle, String.Concat("^", tokenContents), RegexOptions.IgnoreCase)
-
-                        'cocotus 20140207, Fix for movies like "A.C.O.D." -> check for tokenContents(="A","An","the"..) followed by whitespace at the start of title -> If no space -> don't do anyn filtering!
-                        If sTitle.ToLower.StartsWith(tokenContents.ToLower & " ") = False Then
-                            Exit For
-                        End If
-
-                        titleWithoutToken = Regex.Replace(sTitle, String.Concat("^", sToken), String.Empty, RegexOptions.IgnoreCase).Trim
-                        newTitle = String.Format("{0}, {1}", titleWithoutToken, onlyTokenFromTitle.Value).Trim
-
-                        'newTitle = String.Format("{0}, {1}", Regex.Replace(sTitle, String.Concat("^", sToken), String.Empty, RegexOptions.IgnoreCase).Trim, Regex.Match(sTitle, String.Concat("^", Regex.Replace(sToken, "\[(.*?)\]", String.Empty)), RegexOptions.IgnoreCase)).Trim
-                        Exit For
-                    End If
-                Catch ex As Exception
-                    logger.Error(ex, New StackFrame().GetMethod().Name & Convert.ToChar(Windows.Forms.Keys.Tab) & "Title: " & sTitle & " generated an error message")
-                End Try
-            Next
-        End If
-        Return newTitle.Trim
+    Public Shared Function SortTokens_TV(ByVal strTitle As String) As String
+        Return SortTokens(strTitle, Master.eSettings.TVSortTokens)
     End Function
     ''' <summary>
     ''' Converts a string indicating a size into an actual <c>Size</c> object
@@ -962,13 +913,11 @@ Public Class StringUtils
     ''' <summary>
     ''' Transform the codified US movie certification value to MPAA certification
     ''' </summary>
-    ''' <param name="sCert"><c>String</c> USA certification</param>
-    ''' <returns><c>String</c>MPAA certification, or String.Empty if <paramref name="sCert"/> was not recognized</returns>
+    ''' <param name="strCert"><c>String</c> USA certification</param>
+    ''' <returns><c>String</c>MPAA certification, or String.Empty if <paramref name="strCert"/> was not recognized</returns>
     ''' <remarks>Converts entries such as "usa:g" into "Rated G"</remarks>
-    Public Shared Function USACertToMPAA(ByVal sCert As String) As String
-        If String.IsNullOrEmpty(sCert) Then Return String.Empty
-
-        Select Case sCert.ToLower
+    Public Shared Function USACertToMPAA(ByVal strCert As String) As String
+        Select Case strCert.ToLower
             Case "usa:g"
                 Return "Rated G"
             Case "usa:pg"
@@ -979,8 +928,13 @@ Public Class StringUtils
                 Return "Rated R"
             Case "usa:nc-17"
                 Return "Rated NC-17"
+            Case "usa:approved"
+                Return "Approved"
+            Case "usa:passed"
+                Return "Passed"
+            Case Else
+                Return strCert
         End Select
-        Return String.Empty
     End Function
 
 #End Region 'Methods

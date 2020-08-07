@@ -163,7 +163,7 @@ Public Class MediaExporter
                 ElseIf part.ContentType = Enums.ContentType.TVSeason Then
                     If tTVShow IsNot Nothing Then
                         _iCounter_TVSeason = 1
-                        For Each tSeason As Database.DBElement In tTVShow.Seasons.Where(Function(f) Not f.TVSeason.Season = 999)
+                        For Each tSeason As Database.DBElement In tTVShow.Seasons.Where(Function(f) Not f.TVSeason.IsAllSeasons)
                             If Not sfunction Is Nothing Then
                                 If Not sfunction(tTVShow.TVShow.Title, tSeason.TVSeason.Title) Then Return Nothing
                             End If
@@ -212,30 +212,35 @@ Public Class MediaExporter
         FileUtils.Delete.DeleteDirectory(_strBuildPath)
         Directory.CreateDirectory(_strBuildPath)
 
-        Dim htmlPath As String = Path.Combine(strTemplatePath, String.Concat(Master.eSettings.GeneralLanguage, ".html"))
-        If Not File.Exists(htmlPath) Then
-            htmlPath = Path.Combine(strTemplatePath, String.Concat("English_(en_US).html"))
-        End If
-        If Not File.Exists(htmlPath) Then
-            logger.Warn(String.Concat("Can't find template """, htmlPath, """"))
-            Return String.Empty
-        End If
+        If strTemplatePath IsNot Nothing Then
+            Dim htmlPath As String = Path.Combine(strTemplatePath, String.Concat(Master.eSettings.GeneralLanguage, ".html"))
+            If Not File.Exists(htmlPath) Then
+                htmlPath = Path.Combine(strTemplatePath, String.Concat("English_(en_US).html"))
+            End If
+            If Not File.Exists(htmlPath) Then
+                logger.Warn(String.Concat("Can't find template """, htmlPath, """"))
+                Return String.Empty
+            End If
 
-        Dim pattern As String = String.Empty
-        pattern = File.ReadAllText(htmlPath)
-        pattern = ProcessPattern_Settings(pattern)
+            Dim pattern As String = String.Empty
+            pattern = File.ReadAllText(htmlPath)
+            pattern = ProcessPattern_Settings(pattern)
 
-        Dim ContentPartMap As List(Of ContentPart) = Build_ContentPartMap(pattern)
+            Dim ContentPartMap As List(Of ContentPart) = Build_ContentPartMap(pattern)
 
-        _iCounter_Global = 1
-        _iCounter_TVEpisode = 1
-        _iCounter_TVSeason = 1
-        Dim HTMLBody As New StringBuilder
-        HTMLBody = Build_HTML(ContentPartMap, sfunction)
+            _iCounter_Global = 1
+            _iCounter_TVEpisode = 1
+            _iCounter_TVSeason = 1
+            Dim HTMLBody As New StringBuilder
+            HTMLBody = Build_HTML(ContentPartMap, sfunction)
 
-        If HTMLBody IsNot Nothing Then
-            Return SaveAll(Directory.GetParent(htmlPath).FullName, HTMLBody)
+            If HTMLBody IsNot Nothing Then
+                Return SaveAll(Directory.GetParent(htmlPath).FullName, HTMLBody)
+            Else
+                Return String.Empty
+            End If
         Else
+            logger.Warn(String.Concat("Can't find any template"))
             Return String.Empty
         End If
     End Function

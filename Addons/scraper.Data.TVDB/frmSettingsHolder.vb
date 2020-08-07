@@ -102,6 +102,7 @@ Public Class frmSettingsHolder
     End Sub
 
     Private Sub SettingsChanged(ByVal sender As Object, ByVal e As EventArgs) Handles _
+        chkFallBackEng.CheckedChanged,
         chkScraperEpisodeActors.CheckedChanged,
         chkScraperEpisodeAired.CheckedChanged,
         chkScraperEpisodeCredits.CheckedChanged,
@@ -109,8 +110,7 @@ Public Class frmSettingsHolder
         chkScraperEpisodeGuestStars.CheckedChanged,
         chkScraperEpisodePlot.CheckedChanged,
         chkScraperEpisodeRating.CheckedChanged,
-        chkScraperEpisodeTitle.CheckedChanged, _
- _
+        chkScraperEpisodeTitle.CheckedChanged,
         chkScraperShowActors.CheckedChanged,
         chkScraperShowGenres.CheckedChanged,
         chkScraperShowMPAA.CheckedChanged,
@@ -139,6 +139,7 @@ Public Class frmSettingsHolder
     Private Sub SetUp()
         btnUnlockAPI.Text = Master.eLang.GetString(1188, "Use my own API key")
         chkEnabled.Text = Master.eLang.GetString(774, "Enabled")
+        chkFallBackEng.Text = Master.eLang.GetString(922, "Fallback to english")
         chkScraperEpisodeActors.Text = Master.eLang.GetString(231, "Actors")
         chkScraperEpisodeAired.Text = Master.eLang.GetString(728, "Aired")
         chkScraperEpisodeCredits.Text = Master.eLang.GetString(394, "Credits (Writers)")
@@ -154,7 +155,7 @@ Public Class frmSettingsHolder
         chkScraperShowPlot.Text = Master.eLang.GetString(65, "Plot")
         chkScraperShowPremiered.Text = Master.eLang.GetString(724, "Premiered")
         chkScraperShowRating.Text = Master.eLang.GetString(400, "Rating")
-        chkScraperShowRuntime.Text = Master.eLang.GetString(396, "Runtime")
+        chkScraperShowRuntime.Text = Master.eLang.GetString(238, "Runtime")
         chkScraperShowStatus.Text = Master.eLang.GetString(215, "Status")
         chkScraperShowStudios.Text = Master.eLang.GetString(226, "Studios")
         chkScraperShowTitle.Text = Master.eLang.GetString(21, "Title")

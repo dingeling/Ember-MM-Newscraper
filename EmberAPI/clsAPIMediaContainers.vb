@@ -178,6 +178,7 @@ Namespace MediaContainers
         Private _title As String
         Private _tmdb As String
         Private _tvdb As String
+        Private _uniqueids As New List(Of Uniqueid)
         Private _userrating As Integer
         Private _videosource As String
         Private _votes As String
@@ -194,6 +195,85 @@ Namespace MediaContainers
 
 #Region "Properties"
 
+        <XmlElement("id")>
+        Public Property TVDB() As String
+            Get
+                Return _tvdb
+            End Get
+            Set(ByVal value As String)
+                _tvdb = value
+            End Set
+        End Property
+
+        <XmlIgnore()>
+        Public ReadOnly Property TVDBSpecified() As Boolean
+            Get
+                Return Not String.IsNullOrEmpty(_tvdb)
+            End Get
+        End Property
+
+        <XmlElement("imdb")>
+        Public Property IMDB() As String
+            Get
+                Return _imdb
+            End Get
+            Set(ByVal value As String)
+                _imdb = value
+            End Set
+        End Property
+
+        <XmlIgnore()>
+        Public ReadOnly Property IMDBSpecified() As Boolean
+            Get
+                Return Not String.IsNullOrEmpty(_imdb)
+            End Get
+        End Property
+
+        <XmlElement("tmdb")>
+        Public Property TMDB() As String
+            Get
+                Return _tmdb
+            End Get
+            Set(ByVal value As String)
+                _tmdb = value
+            End Set
+        End Property
+
+        <XmlIgnore()>
+        Public ReadOnly Property TMDBSpecified() As Boolean
+            Get
+                Return Not String.IsNullOrEmpty(_tmdb)
+            End Get
+        End Property
+
+        <XmlIgnore()>
+        Public ReadOnly Property AnyUniqueIDSpecified() As Boolean
+            Get
+                Return Not String.IsNullOrEmpty(_imdb) OrElse Not String.IsNullOrEmpty(_tmdb) OrElse Not String.IsNullOrEmpty(_tvdb)
+            End Get
+        End Property
+
+        <XmlElement("uniqueid")>
+        Public Property UniqueIDs() As List(Of Uniqueid)
+            Get
+                Return _uniqueids
+            End Get
+            Set(ByVal value As List(Of Uniqueid))
+                If value Is Nothing Then
+                    _uniqueids.Clear()
+                Else
+                    _uniqueids = value
+                End If
+            End Set
+        End Property
+
+        <XmlIgnore()>
+        Public ReadOnly Property UniqueIDsSpecified() As Boolean
+            Get
+                Return _uniqueids.Count > 0
+            End Get
+        End Property
+
         <XmlElement("title")>
         Public Property Title() As String
             Get
@@ -207,7 +287,7 @@ Namespace MediaContainers
         <XmlIgnore()>
         Public ReadOnly Property TitleSpecified() As Boolean
             Get
-                Return Not String.IsNullOrEmpty(_title)
+                Return Not String.IsNullOrEmpty(_title) AndAlso Not Regex.IsMatch(_title, "s\d{2}e\d{2}$", RegexOptions.IgnoreCase)
             End Get
         End Property
 
@@ -580,57 +660,6 @@ Namespace MediaContainers
             End Get
         End Property
 
-        <XmlElement("uniqueid")>
-        Public Property TVDB() As String
-            Get
-                Return _tvdb
-            End Get
-            Set(ByVal value As String)
-                _tvdb = value
-            End Set
-        End Property
-
-        <XmlIgnore()>
-        Public ReadOnly Property TVDBSpecified() As Boolean
-            Get
-                Return Not String.IsNullOrEmpty(_tvdb)
-            End Get
-        End Property
-
-        <XmlElement("imdb")>
-        Public Property IMDB() As String
-            Get
-                Return _imdb
-            End Get
-            Set(ByVal value As String)
-                _imdb = value
-            End Set
-        End Property
-
-        <XmlIgnore()>
-        Public ReadOnly Property IMDBSpecified() As Boolean
-            Get
-                Return Not String.IsNullOrEmpty(_imdb)
-            End Get
-        End Property
-
-        <XmlElement("tmdb")>
-        Public Property TMDB() As String
-            Get
-                Return _tmdb
-            End Get
-            Set(ByVal value As String)
-                _tmdb = value
-            End Set
-        End Property
-
-        <XmlIgnore()>
-        Public ReadOnly Property TMDBSpecified() As Boolean
-            Get
-                Return Not String.IsNullOrEmpty(_tmdb)
-            End Get
-        End Property
-
         <XmlElement("locked")>
         Public Property Locked() As Boolean
             Get
@@ -701,13 +730,6 @@ Namespace MediaContainers
             End Set
         End Property
 
-        <XmlIgnore()>
-        Public ReadOnly Property AnyUniqueIDSpecified() As Boolean
-            Get
-                Return Not String.IsNullOrEmpty(_imdb) OrElse Not String.IsNullOrEmpty(_tmdb) OrElse Not String.IsNullOrEmpty(_tvdb)
-            End Get
-        End Property
-
 #End Region 'Properties
 
 #Region "Methods"
@@ -742,6 +764,7 @@ Namespace MediaContainers
             _tmdb = String.Empty
             _tvdb = String.Empty
             _title = String.Empty
+            _uniqueids.Clear()
             _userrating = 0
             _videosource = String.Empty
             _votes = String.Empty
@@ -1000,6 +1023,7 @@ Namespace MediaContainers
         Private _tmdbcolid As String
         Private _top250 As Integer
         Private _trailer As String
+        Private _uniqueids As New List(Of UniqueId)
         Private _userrating As Integer
         Private _videosource As String
         Private _votes As String
@@ -1055,6 +1079,52 @@ Namespace MediaContainers
         Public ReadOnly Property TMDBSpecified() As Boolean
             Get
                 Return Not String.IsNullOrEmpty(_tmdb)
+            End Get
+        End Property
+
+
+        <XmlIgnore()>
+        Public ReadOnly Property AnyUniqueIDSpecified() As Boolean
+            Get
+                Return Not String.IsNullOrEmpty(_imdb) OrElse Not String.IsNullOrEmpty(_tmdb)
+            End Get
+        End Property
+
+        <XmlElement("tmdbcolid")>
+        Public Property TMDBColID() As String
+            Get
+                Return _tmdbcolid
+            End Get
+            Set(ByVal value As String)
+                _tmdbcolid = value
+            End Set
+        End Property
+
+        <XmlIgnore()>
+        Public ReadOnly Property TMDBColIDSpecified() As Boolean
+            Get
+                Return Not String.IsNullOrEmpty(_tmdbcolid)
+            End Get
+        End Property
+
+        <XmlElement("uniqueid")>
+        Public Property UniqueIDs() As List(Of UniqueId)
+            Get
+                Return _uniqueids
+            End Get
+            Set(ByVal value As List(Of UniqueId))
+                If value Is Nothing Then
+                    _uniqueids.Clear()
+                Else
+                    _uniqueids = value
+                End If
+            End Set
+        End Property
+
+        <XmlIgnore()>
+        Public ReadOnly Property UniqueIDsSpecified() As Boolean
+            Get
+                Return _uniqueids.Count > 0
             End Get
         End Property
 
@@ -1510,7 +1580,7 @@ Namespace MediaContainers
                 Return _lastplayed
             End Get
             Set(ByVal value As String)
-                _lastplayed = value
+                _lastplayed = Functions.ConvertToProperDateTime(value)
             End Set
         End Property
 
@@ -1706,30 +1776,6 @@ Namespace MediaContainers
         Public ReadOnly Property VideoSourceSpecified() As Boolean
             Get
                 Return Not String.IsNullOrEmpty(_videosource)
-            End Get
-        End Property
-
-        <XmlElement("tmdbcolid")>
-        Public Property TMDBColID() As String
-            Get
-                Return _tmdbcolid
-            End Get
-            Set(ByVal value As String)
-                _tmdbcolid = value
-            End Set
-        End Property
-
-        <XmlIgnore()>
-        Public ReadOnly Property TMDBColIDSpecified() As Boolean
-            Get
-                Return Not String.IsNullOrEmpty(_tmdbcolid)
-            End Get
-        End Property
-
-        <XmlIgnore()>
-        Public ReadOnly Property AnyUniqueIDSpecified() As Boolean
-            Get
-                Return Not String.IsNullOrEmpty(_imdb) OrElse Not String.IsNullOrEmpty(_tmdb)
             End Get
         End Property
 
@@ -1971,6 +2017,7 @@ Namespace MediaContainers
             _tmdbcolid = String.Empty
             _top250 = 0
             _trailer = String.Empty
+            _uniqueids.Clear()
             _userrating = 0
             _videosource = String.Empty
             _votes = String.Empty
@@ -2594,7 +2641,14 @@ Namespace MediaContainers
         <XmlIgnore()>
         Public ReadOnly Property SeasonSpecified() As Boolean
             Get
-                Return Not String.IsNullOrEmpty(_season.ToString) AndAlso Not _season = -1
+                Return Not _season = -2
+            End Get
+        End Property
+
+        <XmlIgnore()>
+        Public ReadOnly Property IsAllSeasons() As Boolean
+            Get
+                Return _season = -1
             End Get
         End Property
 
@@ -2692,7 +2746,7 @@ Namespace MediaContainers
             _locked = False
             _plot = String.Empty
             _scrapersource = String.Empty
-            _season = -1
+            _season = -2 '-1 is reserved for * All Seasons entry
             _tmdb = String.Empty
             _tvdb = String.Empty
             _title = String.Empty
@@ -2822,6 +2876,7 @@ Namespace MediaContainers
         Private _title As String
         Private _tmdb As String
         Private _tvdb As String
+        Private _uniqueids As New List(Of Uniqueid)
         Private _userrating As Integer
         Private _votes As String
 
@@ -2843,57 +2898,6 @@ Namespace MediaContainers
 #End Region 'Constructors
 
 #Region "Properties"
-
-        <XmlElement("title")>
-        Public Property Title() As String
-            Get
-                Return _title
-            End Get
-            Set(ByVal value As String)
-                _title = value
-            End Set
-        End Property
-
-        <XmlIgnore()>
-        Public ReadOnly Property TitleSpecified() As Boolean
-            Get
-                Return Not String.IsNullOrEmpty(_title)
-            End Get
-        End Property
-
-        <XmlElement("originaltitle")>
-        Public Property OriginalTitle() As String
-            Get
-                Return _originaltitle
-            End Get
-            Set(ByVal value As String)
-                _originaltitle = value
-            End Set
-        End Property
-
-        <XmlIgnore()>
-        Public ReadOnly Property OriginalTitleSpecified() As Boolean
-            Get
-                Return Not String.IsNullOrEmpty(_originaltitle)
-            End Get
-        End Property
-
-        <XmlElement("sorttitle")>
-        Public Property SortTitle() As String
-            Get
-                Return _sorttitle
-            End Get
-            Set(ByVal value As String)
-                _sorttitle = value
-            End Set
-        End Property
-
-        <XmlIgnore()>
-        Public ReadOnly Property SortTitleSpecified() As Boolean
-            Get
-                Return Not String.IsNullOrEmpty(_sorttitle)
-            End Get
-        End Property
 
         <XmlElement("id")>
         Public Property TVDB() As String
@@ -2943,6 +2947,85 @@ Namespace MediaContainers
         Public ReadOnly Property TMDBSpecified() As Boolean
             Get
                 Return Not String.IsNullOrEmpty(_tmdb)
+            End Get
+        End Property
+
+        <XmlIgnore()>
+        Public ReadOnly Property AnyUniqueIDSpecified() As Boolean
+            Get
+                Return Not String.IsNullOrEmpty(_imdb) OrElse Not String.IsNullOrEmpty(_tmdb) OrElse Not String.IsNullOrEmpty(_tvdb)
+            End Get
+        End Property
+
+        <XmlElement("uniqueid")>
+        Public Property UniqueIDs() As List(Of UniqueId)
+            Get
+                Return _uniqueids
+            End Get
+            Set(ByVal value As List(Of UniqueId))
+                If value Is Nothing Then
+                    _uniqueids.Clear()
+                Else
+                    _uniqueids = value
+                End If
+            End Set
+        End Property
+
+        <XmlIgnore()>
+        Public ReadOnly Property UniqueIDsSpecified() As Boolean
+            Get
+                Return _uniqueids.Count > 0
+            End Get
+        End Property
+
+        <XmlElement("title")>
+        Public Property Title() As String
+            Get
+                Return _title
+            End Get
+            Set(ByVal value As String)
+                _title = value
+            End Set
+        End Property
+
+        <XmlIgnore()>
+        Public ReadOnly Property TitleSpecified() As Boolean
+            Get
+                Return Not String.IsNullOrEmpty(_title)
+            End Get
+        End Property
+
+        <XmlElement("originaltitle")>
+        Public Property OriginalTitle() As String
+            Get
+                Return _originaltitle
+            End Get
+            Set(ByVal value As String)
+                _originaltitle = value
+            End Set
+        End Property
+
+        <XmlIgnore()>
+        Public ReadOnly Property OriginalTitleSpecified() As Boolean
+            Get
+                Return Not String.IsNullOrEmpty(_originaltitle)
+            End Get
+        End Property
+
+        <XmlElement("sorttitle")>
+        Public Property SortTitle() As String
+            Get
+                Return _sorttitle
+            End Get
+            Set(ByVal value As String)
+                _sorttitle = value
+            End Set
+        End Property
+
+        <XmlIgnore()>
+        Public ReadOnly Property SortTitleSpecified() As Boolean
+            Get
+                Return Not String.IsNullOrEmpty(_sorttitle)
             End Get
         End Property
 
@@ -3364,13 +3447,6 @@ Namespace MediaContainers
             End Get
         End Property
 
-        <XmlIgnore()>
-        Public ReadOnly Property AnyUniqueIDSpecified() As Boolean
-            Get
-                Return Not String.IsNullOrEmpty(_imdb) OrElse Not String.IsNullOrEmpty(_tmdb) OrElse Not String.IsNullOrEmpty(_tvdb)
-            End Get
-        End Property
-
 #End Region 'Properties
 
 #Region "Methods"
@@ -3481,6 +3557,7 @@ Namespace MediaContainers
             _tags.Clear()
             _title = String.Empty
             _tmdb = String.Empty
+            _uniqueids.Clear()
             _userrating = 0
             _votes = String.Empty
         End Sub
@@ -4316,13 +4393,13 @@ Namespace MediaContainers
 
                     'Season Banner
                     If Banner.LoadAndCache(tContentType, True) Then
-                        If DBElement.TVSeason.Season = 999 Then
+                        If DBElement.TVSeason.IsAllSeasons Then
                             Banner.LocalFilePath = Banner.ImageOriginal.Save_TVAllSeasons(DBElement, Enums.ModifierType.AllSeasonsBanner)
                         Else
                             Banner.LocalFilePath = Banner.ImageOriginal.Save_TVSeason(DBElement, Enums.ModifierType.SeasonBanner)
                         End If
                     Else
-                        If DBElement.TVSeason.Season = 999 Then
+                        If DBElement.TVSeason.IsAllSeasons Then
                             Images.Delete_TVAllSeasons(DBElement, Enums.ModifierType.AllSeasonsBanner)
                             Banner = New Image
                         Else
@@ -4333,13 +4410,13 @@ Namespace MediaContainers
 
                     'Season Fanart
                     If Fanart.LoadAndCache(tContentType, True) Then
-                        If DBElement.TVSeason.Season = 999 Then
+                        If DBElement.TVSeason.IsAllSeasons Then
                             Fanart.LocalFilePath = Fanart.ImageOriginal.Save_TVAllSeasons(DBElement, Enums.ModifierType.AllSeasonsFanart)
                         Else
                             Fanart.LocalFilePath = Fanart.ImageOriginal.Save_TVSeason(DBElement, Enums.ModifierType.SeasonFanart)
                         End If
                     Else
-                        If DBElement.TVSeason.Season = 999 Then
+                        If DBElement.TVSeason.IsAllSeasons Then
                             Images.Delete_TVAllSeasons(DBElement, Enums.ModifierType.AllSeasonsFanart)
                             Fanart = New Image
                         Else
@@ -4350,13 +4427,13 @@ Namespace MediaContainers
 
                     'Season Landscape
                     If Landscape.LoadAndCache(tContentType, True) Then
-                        If DBElement.TVSeason.Season = 999 Then
+                        If DBElement.TVSeason.IsAllSeasons Then
                             Landscape.LocalFilePath = Landscape.ImageOriginal.Save_TVAllSeasons(DBElement, Enums.ModifierType.AllSeasonsLandscape)
                         Else
                             Landscape.LocalFilePath = Landscape.ImageOriginal.Save_TVSeason(DBElement, Enums.ModifierType.SeasonLandscape)
                         End If
                     Else
-                        If DBElement.TVSeason.Season = 999 Then
+                        If DBElement.TVSeason.IsAllSeasons Then
                             Images.Delete_TVAllSeasons(DBElement, Enums.ModifierType.AllSeasonsLandscape)
                             Landscape = New Image
                         Else
@@ -4367,13 +4444,13 @@ Namespace MediaContainers
 
                     'Season Poster
                     If Poster.LoadAndCache(tContentType, True) Then
-                        If DBElement.TVSeason.Season = 999 Then
+                        If DBElement.TVSeason.IsAllSeasons Then
                             Poster.LocalFilePath = Poster.ImageOriginal.Save_TVAllSeasons(DBElement, Enums.ModifierType.AllSeasonsPoster)
                         Else
                             Poster.LocalFilePath = Poster.ImageOriginal.Save_TVSeason(DBElement, Enums.ModifierType.SeasonPoster)
                         End If
                     Else
-                        If DBElement.TVSeason.Season = 999 Then
+                        If DBElement.TVSeason.IsAllSeasons Then
                             Images.Delete_TVAllSeasons(DBElement, Enums.ModifierType.AllSeasonsPoster)
                             Poster = New Image
                         Else
@@ -5727,7 +5804,7 @@ Namespace MediaContainers
             If Not ThemeOriginal.hasMemoryStream Then
                 If File.Exists(LocalFilePath) Then
                     ThemeOriginal.LoadFromFile(LocalFilePath)
-                Else
+                ElseIf URLAudioStreamSpecified Then
                     ThemeOriginal.LoadFromWeb(Me)
                 End If
             End If
@@ -5746,7 +5823,7 @@ Namespace MediaContainers
                 Select Case tContentType
                     Case Enums.ContentType.Movie
                         If .Theme.LoadAndCache() Then
-                            If ForceFileCleanup Then Trailers.Delete_Movie(tDBElement, ForceFileCleanup)
+                            Themes.Delete_Movie(tDBElement, ForceFileCleanup)
                             .Theme.LocalFilePath = .Theme.ThemeOriginal.Save_Movie(tDBElement)
                         Else
                             Themes.Delete_Movie(tDBElement, ForceFileCleanup)
@@ -5755,7 +5832,7 @@ Namespace MediaContainers
 
                     Case Enums.ContentType.TVShow
                         If .Theme.LoadAndCache() Then
-                            If ForceFileCleanup Then Themes.Delete_TVShow(tDBElement) ', ForceFileCleanup)
+                            Themes.Delete_TVShow(tDBElement) ', ForceFileCleanup)
                             .Theme.LocalFilePath = .Theme.ThemeOriginal.Save_TVShow(tDBElement)
                         Else
                             Themes.Delete_TVShow(tDBElement) ', ForceFileCleanup)
@@ -5772,148 +5849,64 @@ Namespace MediaContainers
     <Serializable()>
     Public Class Trailer
 
-#Region "Fields"
-
-        Private _duration As String
-        Private _isDash As Boolean
-        Private _localfilepath As String
-        Private _longlang As String
-        Private _quality As Enums.TrailerVideoQuality
-        Private _scraper As String
-        Private _shortlang As String
-        Private _source As String
-        Private _title As String
-        Private _traileroriginal As New Trailers
-        Private _type As Enums.TrailerType
-        Private _urlaudiostream As String
-        Private _urlvideostream As String
-        Private _urlwebsite As String
-
-#End Region 'Fields
-
-#Region "Constructors"
-
-        Public Sub New()
-            Clear()
-        End Sub
-
-#End Region 'Constructors
-
 #Region "Properties"
 
-        Public Property Duration() As String
-            Get
-                Return _duration
-            End Get
-            Set(ByVal value As String)
-                _duration = value
-            End Set
-        End Property
+        Public Property Duration() As String = String.Empty
         ''' <summary>
         ''' If is a Dash video, we need also an audio URL to merge video and audio
         ''' </summary>
         ''' <value></value>
         ''' <returns></returns>
         ''' <remarks></remarks>
-        Public Property isDash() As Boolean
+        Public ReadOnly Property IsDash() As Boolean
             Get
-                Return _isDash
+                Return URLVideoStreamSpecified AndAlso URLAudioStreamSpecified
             End Get
-            Set(ByVal value As Boolean)
-                _isDash = value
-            End Set
         End Property
 
-        Public Property LocalFilePath() As String
-            Get
-                Return _localfilepath
-            End Get
-            Set(ByVal value As String)
-                _localfilepath = value
-            End Set
-        End Property
+        Public Property LocalFilePath() As String = String.Empty
 
         Public ReadOnly Property LocalFilePathSpecified() As Boolean
             Get
-                Return Not String.IsNullOrEmpty(_localfilepath)
+                Return Not String.IsNullOrEmpty(LocalFilePath)
             End Get
         End Property
 
-        Public Property LongLang() As String
+        Public Property LongLang() As String = String.Empty
+
+        Public Property Quality() As Enums.TrailerVideoQuality = Enums.TrailerVideoQuality.Any
+
+        Public Property Scraper() As String = String.Empty
+
+        Public Property ShortLang() As String = String.Empty
+
+        Public Property Source() As String = String.Empty
+
+        Public Property Streams() As StreamCollection = New StreamCollection
+
+        Public ReadOnly Property StreamsSpecified() As Boolean
             Get
-                Return _longlang
+                Return Streams.HasStreams
             End Get
-            Set(ByVal value As String)
-                _longlang = value
-            End Set
         End Property
 
-        Public Property Quality() As Enums.TrailerVideoQuality
-            Get
-                Return _quality
-            End Get
-            Set(ByVal value As Enums.TrailerVideoQuality)
-                _quality = value
-            End Set
-        End Property
+        Public Property Title() As String = String.Empty
 
-        Public Property Scraper() As String
-            Get
-                Return _scraper
-            End Get
-            Set(ByVal value As String)
-                _scraper = value
-            End Set
-        End Property
+        Public Property TrailerOriginal() As Trailers = New Trailers
 
-        Public Property ShortLang() As String
-            Get
-                Return _shortlang
-            End Get
-            Set(ByVal value As String)
-                _shortlang = value
-            End Set
-        End Property
-
-        Public Property Source() As String
-            Get
-                Return _source
-            End Get
-            Set(ByVal value As String)
-                _source = value
-            End Set
-        End Property
-
-        Public Property Title() As String
-            Get
-                Return _title
-            End Get
-            Set(ByVal value As String)
-                _title = value
-            End Set
-        End Property
-
-        Public Property Type() As Enums.TrailerType
-            Get
-                Return _type
-            End Get
-            Set(ByVal value As Enums.TrailerType)
-                _type = value
-            End Set
-        End Property
+        Public Property Type() As Enums.TrailerType = Enums.TrailerType.Any
         ''' <summary>
         ''' Download audio URL of the trailer
         ''' </summary>
         ''' <value></value>
         ''' <returns></returns>
         ''' <remarks></remarks>
-        Public Property URLAudioStream() As String
+        Public Property URLAudioStream() As String = String.Empty
+
+        Public ReadOnly Property URLAudioStreamSpecified() As Boolean
             Get
-                Return _urlaudiostream
+                Return Not String.IsNullOrEmpty(URLAudioStream)
             End Get
-            Set(ByVal value As String)
-                _urlaudiostream = value
-            End Set
         End Property
         ''' <summary>
         ''' Download video URL of the trailer
@@ -5921,18 +5914,11 @@ Namespace MediaContainers
         ''' <value></value>
         ''' <returns></returns>
         ''' <remarks></remarks>
-        Public Property URLVideoStream() As String
-            Get
-                Return _urlvideostream
-            End Get
-            Set(ByVal value As String)
-                _urlvideostream = value
-            End Set
-        End Property
+        Public Property URLVideoStream() As String = String.Empty
 
         Public ReadOnly Property URLVideoStreamSpecified() As Boolean
             Get
-                Return Not String.IsNullOrEmpty(_urlvideostream)
+                Return Not String.IsNullOrEmpty(URLVideoStream)
             End Get
         End Property
         ''' <summary>
@@ -5941,57 +5927,24 @@ Namespace MediaContainers
         ''' <value></value>
         ''' <returns></returns>
         ''' <remarks></remarks>
-        Public Property URLWebsite() As String
-            Get
-                Return _urlwebsite
-            End Get
-            Set(ByVal value As String)
-                _urlwebsite = value
-            End Set
-        End Property
+        Public Property URLWebsite() As String = String.Empty
 
         Public ReadOnly Property URLWebsiteSpecified() As Boolean
             Get
-                Return Not String.IsNullOrEmpty(_urlwebsite)
+                Return Not String.IsNullOrEmpty(URLWebsite)
             End Get
-        End Property
-
-        Public Property TrailerOriginal() As Trailers
-            Get
-                Return _traileroriginal
-            End Get
-            Set(ByVal value As Trailers)
-                _traileroriginal = value
-            End Set
         End Property
 
 #End Region 'Properties
 
 #Region "Methods"
 
-        Public Sub Clear()
-            _duration = String.Empty
-            _isDash = False
-            _localfilepath = String.Empty
-            _longlang = String.Empty
-            _quality = Enums.TrailerVideoQuality.Any
-            _scraper = String.Empty
-            _shortlang = String.Empty
-            _source = String.Empty
-            _title = String.Empty
-            _traileroriginal = New Trailers
-            _type = Enums.TrailerType.Any
-            _urlaudiostream = String.Empty
-            _urlvideostream = String.Empty
-            _urlwebsite = String.Empty
-        End Sub
-
         Public Function LoadAndCache() As Boolean
 
             If Not TrailerOriginal.hasMemoryStream Then
                 If File.Exists(LocalFilePath) Then
                     TrailerOriginal.LoadFromFile(LocalFilePath)
-                Else
+                ElseIf URLVideoStreamSpecified Then
                     TrailerOriginal.LoadFromWeb(Me)
                 End If
             End If
@@ -6009,10 +5962,9 @@ Namespace MediaContainers
             With tDBElement
                 Select Case tContentType
                     Case Enums.ContentType.Movie
-
                         'Movie Trailer
                         If .Trailer.LoadAndCache() Then
-                            If ForceFileCleanup Then Trailers.Delete_Movie(tDBElement, ForceFileCleanup)
+                            Trailers.Delete_Movie(tDBElement, ForceFileCleanup)
                             .Trailer.LocalFilePath = .Trailer.TrailerOriginal.Save_Movie(tDBElement)
                         Else
                             Trailers.Delete_Movie(tDBElement, ForceFileCleanup)
@@ -6020,6 +5972,233 @@ Namespace MediaContainers
                         End If
                 End Select
             End With
+        End Sub
+
+#End Region 'Methods
+
+#Region "Nested Types"
+
+        <Serializable()>
+        Public Class AudioStream
+            Implements IComparable(Of AudioStream)
+
+#Region "Properties"
+
+            Public ReadOnly Property Description() As String
+                Get
+                    Return String.Format("{0} ({1})", QualityToString(FormatQuality), CodecToString(FormatCodec))
+                End Get
+            End Property
+
+            Public Property FormatCodec() As Enums.TrailerAudioCodec = Enums.TrailerAudioCodec.UNKNOWN
+
+            Public Property FormatQuality() As Enums.TrailerAudioQuality = Enums.TrailerAudioQuality.UNKNOWN
+
+            Public Property URL() As String = String.Empty
+
+#End Region 'Properties
+
+#Region "Methods"
+
+            Private Shared Function CodecToString(ByVal audioCodec As Enums.TrailerAudioCodec) As String
+                Select Case audioCodec
+                    Case Enums.TrailerAudioCodec.UNKNOWN
+                        Return "Unknown"
+                    Case Enums.TrailerAudioCodec.AAC_SPATIAL
+                        Return "AAC 6Ch"
+                    Case Enums.TrailerAudioCodec.AC3_SPATIAL
+                        Return "AC-3 6Ch"
+                    Case Enums.TrailerAudioCodec.DTSE_SPATIAL
+                        Return "DTSE 6Ch"
+                    Case Enums.TrailerAudioCodec.EC3_SPATIAL
+                        Return "EC-3 6Ch"
+                    Case Enums.TrailerAudioCodec.Opus_SPATIAL
+                        Return "Opus 6Ch"
+                    Case Enums.TrailerAudioCodec.Vorbis_SPATIAL
+                        Return "Vorbis 4Ch"
+                    Case Else
+                        Return [Enum].GetName(GetType(Enums.TrailerAudioCodec), audioCodec)
+                End Select
+            End Function
+
+            Public Function CompareTo(ByVal other As AudioStream) As Integer Implements IComparable(Of AudioStream).CompareTo
+                Return (FormatQuality).CompareTo(other.FormatQuality)
+            End Function
+
+            Private Shared Function QualityToString(ByVal audioQuality As Enums.TrailerAudioQuality) As String
+                Select Case audioQuality
+                    Case Enums.TrailerAudioQuality.UNKNOWN
+                        Return "Unknown"
+                    Case Else
+                        Return [Enum].GetName(GetType(Enums.TrailerAudioQuality), audioQuality).Remove(0, 1).Replace("kbps", " kbit/s")
+                End Select
+            End Function
+
+#End Region 'Methods
+
+        End Class
+
+        <Serializable()>
+        Public Class StreamCollection
+
+#Region "Properties"
+
+            Public Property AudioStreams As New List(Of AudioStream)
+
+            Public ReadOnly Property HasStreams As Boolean
+                Get
+                    Return AudioStreams IsNot Nothing AndAlso AudioStreams.Count > 0 OrElse VideoStreams IsNot Nothing AndAlso VideoStreams.Count > 0
+                End Get
+            End Property
+
+            Public Property VideoStreams As New List(Of VideoStream)
+
+#End Region 'Properties
+
+        End Class
+
+        <Serializable()>
+        Public Class VideoStream
+            Implements IComparable(Of VideoStream)
+
+#Region "Properties"
+
+            Public ReadOnly Property Description() As String
+                Get
+                    Return String.Format("{0} ({1})", QualityToString(FormatQuality), CodecToString(FormatCodec))
+                End Get
+            End Property
+
+            Public Property FormatCodec() As Enums.TrailerVideoCodec = Enums.TrailerVideoCodec.UNKNOWN
+
+            Public Property FormatQuality() As Enums.TrailerVideoQuality = Enums.TrailerVideoQuality.UNKNOWN
+
+            Public Property IsDash() As Boolean = False
+
+            Public Property URL() As String = String.Empty
+
+#End Region 'Properties
+
+#Region "Methods"
+
+            Private Shared Function CodecToString(ByVal videoCodec As Enums.TrailerVideoCodec) As String
+                Select Case videoCodec
+                    Case Enums.TrailerVideoCodec.UNKNOWN
+                        Return "Unknown"
+                    Case Enums.TrailerVideoCodec.VP9_HDR
+                        Return "VP9, HDR"
+                    Case Else
+                        Return [Enum].GetName(GetType(Enums.TrailerVideoCodec), videoCodec)
+                End Select
+            End Function
+
+            Public Function CompareTo(ByVal other As VideoStream) As Integer Implements IComparable(Of VideoStream).CompareTo
+                Return (FormatQuality).CompareTo(other.FormatQuality)
+            End Function
+
+            Private Shared Function QualityToString(ByVal videoQuality As Enums.TrailerVideoQuality) As String
+                Select Case videoQuality
+                    Case Enums.TrailerVideoQuality.UNKNOWN
+                        Return "Unknown"
+                    Case Enums.TrailerVideoQuality.HD1080p60fps
+                        Return "1080p, 60fps"
+                    Case Enums.TrailerVideoQuality.HD2160p60fps
+                        Return "2160, 60fps"
+                    Case Enums.TrailerVideoQuality.HD720p60fps
+                        Return "720p, 60fps"
+                    Case Enums.TrailerVideoQuality.SQ144p15fps
+                        Return "144p, 15fps"
+                    Case Else
+                        Return [Enum].GetName(GetType(Enums.TrailerVideoQuality), videoQuality).Remove(0, 2)
+                End Select
+            End Function
+
+#End Region 'Methods
+
+        End Class
+
+#End Region 'Nested Types
+
+    End Class
+
+    <Serializable()>
+    Public Class Uniqueid
+
+#Region "Fields"
+
+        Private _id As Long
+        Private _isdefault As Boolean
+        Private _type As String
+        Private _value As String
+
+#End Region 'Fields
+
+#Region "Constructors"
+
+        Public Sub New()
+            Clean()
+        End Sub
+
+#End Region 'Constructors
+
+#Region "Properties"
+
+        <XmlIgnore()>
+        Public Property ID() As Long
+            Get
+                Return _id
+            End Get
+            Set(ByVal Value As Long)
+                _id = Value
+            End Set
+        End Property
+
+        <XmlAttribute("type")>
+        Public Property Type() As String
+            Get
+                Return _type
+            End Get
+            Set(ByVal Value As String)
+                _type = Value
+            End Set
+        End Property
+
+        <XmlIgnore()>
+        Public ReadOnly Property TypeSpecified() As Boolean
+            Get
+                Return Not String.IsNullOrEmpty(_type)
+            End Get
+        End Property
+
+        <XmlAttribute("default")>
+        Public Property IsDefault() As Boolean
+            Get
+                Return _isdefault
+            End Get
+            Set(ByVal Value As Boolean)
+                _isdefault = Value
+            End Set
+        End Property
+
+        <XmlText()>
+        Public Property Value() As String
+            Get
+                Return _value
+            End Get
+            Set(ByVal Value As String)
+                _value = Value
+            End Set
+        End Property
+
+#End Region 'Properties
+
+#Region "Methods"
+
+        Public Sub Clean()
+            _id = -1
+            _isdefault = False
+            _type = "unknown"
+            _value = String.Empty
         End Sub
 
 #End Region 'Methods

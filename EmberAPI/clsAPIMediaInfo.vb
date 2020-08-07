@@ -434,8 +434,14 @@ Public Class MediaInfo
 
     Private Function ConvertAFormat(ByVal sCodecID As String, ByVal sFormat As String, ByVal sCodecHint As String, ByVal sProfile As String) As String
         Dim tCodec As String = String.Empty
-        If sFormat.ToLower.Contains("dts") AndAlso (sProfile.ToLower = "hra / core" OrElse sProfile.ToLower = "ma / core") Then
+        If sFormat.ToLower.Contains("dts") AndAlso (sProfile.ToLower.Contains("hra / core") OrElse sProfile.ToLower.Contains("ma / core")) Then
             tCodec = sProfile
+        ElseIf sFormat.ToLower.Contains("atmos / truehd") Then
+            tCodec = sFormat
+        ElseIf sProfile.ToLower.Contains("truehd+atmos") Then
+            tCodec = sProfile
+        ElseIf sProfile.ToLower.Contains("e-ac-3+atmos") Then
+            tCodec = "e-ac-3+atmos"
         ElseIf Not String.IsNullOrEmpty(sCodecID) AndAlso Not Integer.TryParse(sCodecID, 0) AndAlso Not sCodecID.ToLower.Contains("a_pcm") AndAlso Not sCodecID.Contains("00001000-0000-0100-8000-00AA00389B71") Then
             tCodec = sCodecID
         ElseIf Not String.IsNullOrEmpty(sCodecHint) Then
@@ -745,6 +751,15 @@ Public Class MediaInfo
                                                                               """"), False, True)
                             End If
 
+                            'timeout enabled to wait for virtual drive
+                            Dim strTimeout = AdvancedSettings.GetSetting("GeneralDaemonTimeout", String.Empty)
+                            If Not String.IsNullOrEmpty(strTimeout) Then
+                                Dim iTimeout As Integer
+                                If Integer.TryParse(strTimeout, iTimeout) Then
+                                    Threading.Thread.Sleep(iTimeout)
+                                End If
+                            End If
+
                             'now check if it's bluray or dvd image/VIDEO_TS/BMDV Folder-Scanning!
                             If Directory.Exists(String.Concat(driveletter, ":\VIDEO_TS")) Then
                                 sPath = String.Concat(driveletter, ":\VIDEO_TS")
@@ -883,7 +898,10 @@ Public Class MediaInfo
                     miAudio = New MediaContainers.Audio
                     miAudio.Codec = ConvertAFormat(Get_(StreamKind.Audio, a, "CodecID"), Get_(StreamKind.Audio, a, "Format"),
                                                    Get_(StreamKind.Audio, a, "CodecID/Hint"), Get_(StreamKind.Audio, a, "Format_Profile"))
-                    miAudio.Channels = FormatAudioChannel(Get_(StreamKind.Audio, a, "Channel(s)"))
+                    miAudio.Channels = FormatAudioChannel(Get_(StreamKind.Audio, a, "Channel(s)_Original"))
+                    If String.IsNullOrEmpty(miAudio.Channels) Then
+                        miAudio.Channels = FormatAudioChannel(Get_(StreamKind.Audio, a, "Channel(s)"))
+                    End If
 
                     'cocotus, 2013/02 Added support for new MediaInfo-fields
                     'Audio-Bitrate
@@ -981,33 +999,30 @@ Public Class MediaInfo
     ''' <summary>
     ''' Convert string "x/y" to single digit number "x" (Audio Channel conversion)
     ''' </summary>
-    ''' <param name="AudioChannelstring">The channelstring (as string) to clean</param>
-    ''' <returns>cleaned Channelnumber, i.e  "8/6" will return as 7 </returns>
+    ''' <param name="channelinfo">The channelstring (as string) to clean</param>
+    ''' <returns>cleaned Channelnumber, i.e  "Object Based / 8 / 6" will return a 8 </returns>
     ''' <remarks>Inputstring "x/y" will return as "x" which is highest number, i.e 8/6 -> 8 (assume: highest number always first!)
-    ''' 2014/01/22 Cocotus - Since this functionality is needed on several places in Ember, I builded new function to avoid duplicate code
     '''</remarks>
-    Public Shared Function FormatAudioChannel(ByVal AudioChannelstring As String) As String
-        'cocotus 20130303 ChannelInfo fix
-        'Channel(s)/sNumber might contain: "8 / 6" (7.1) so we must handle backslash and spaces --> XBMC/Ember only supports Number like 2,6,8...
-        If AudioChannelstring.Contains("/") Then
-            Dim mystring As String = ""
-            'use regex to get rid of all letters(if that ever happens just in case) and also remove spaces
-            mystring = Text.RegularExpressions.Regex.Replace(AudioChannelstring, "[^/.0-9]", "").Trim
-            'now get channel number
-            If mystring.Length > 0 Then
-                ' fix for new dolby atmos stream info i.e. "ObjectBased / 8 channels"
-                mystring = mystring.Replace("/", "")
-                If Char.IsDigit(mystring(0)) Then
-                    Try
-                        'In case of "x/y" this will return x which is highest number, i.e 8/6 -> 8 (highest number always first!)
-                        AudioChannelstring = CStr(mystring(0))
-                    Catch ex As Exception
-                    End Try
-                End If
-            End If
+    Public Shared Function FormatAudioChannel(ByVal channelinfo As String) As String
+        'for channel information like "15 objects / 6"
+        'returns only the number of channels
+        Dim rMatch = Regex.Match(channelinfo.ToLower, "(\d+) objects \/? (\d+)")
+        If rMatch.Success Then
+            Return rMatch.Groups(2).Value
         End If
-        Return AudioChannelstring
-        'cocotus end
+        'for channel information like "Object Based / 8 / 6" or "8 / 6" or "8"
+        'returns the highest number
+        Dim rMatches = Regex.Matches(channelinfo.ToLower, "\d+")
+        If rMatches.Count > 0 Then
+            Dim lstNumber As New List(Of Integer)
+            For i As Integer = 0 To rMatches.Count - 1
+                lstNumber.Add(CInt(rMatches(i).Value))
+            Next
+            lstNumber.Sort()
+            lstNumber.Reverse()
+            Return lstNumber(0).ToString
+        End If
+        Return channelinfo
     End Function
     ''' <summary>
     ''' Converts "Yes" and "No" to boolean

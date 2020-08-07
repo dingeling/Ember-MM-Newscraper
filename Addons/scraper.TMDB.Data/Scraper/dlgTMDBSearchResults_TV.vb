@@ -32,7 +32,7 @@ Public Class dlgTMDBSearchResults_TV
     Friend WithEvents tmrLoad As New Timer
     Friend WithEvents tmrWait As New Timer
 
-    Private _TMDB As TMDB.Scraper
+    Private _TMDB As Scraper
     Private sHTTP As New HTTP
     Private _currnode As Integer = -1
     Private _prevnode As Integer = -2
@@ -58,7 +58,7 @@ Public Class dlgTMDBSearchResults_TV
 
 #Region "Methods"
 
-    Public Sub New(ByVal SpecialSettings As TMDB_Data.SpecialSettings, TMDB As TMDB.Scraper)
+    Public Sub New(ByVal SpecialSettings As TMDB_Data.SpecialSettings, TMDB As Scraper)
         ' This call is required by the designer.
         InitializeComponent()
         Left = Master.AppPos.Left + (Master.AppPos.Width - Width) \ 2
@@ -86,7 +86,7 @@ Public Class dlgTMDBSearchResults_TV
         Return ShowDialog()
     End Function
 
-    Public Overloads Function ShowDialog(ByVal Res As TMDB.SearchResults_TVShow, ByVal sShowTitle As String, ByVal sShowPath As String) As DialogResult
+    Public Overloads Function ShowDialog(ByVal Res As SearchResults_TVShow, ByVal sShowTitle As String, ByVal sShowPath As String) As DialogResult
         tmrWait.Enabled = False
         tmrWait.Interval = 250
         tmrLoad.Enabled = False
@@ -120,7 +120,7 @@ Public Class dlgTMDBSearchResults_TV
         Dim pOpt As New Structures.ScrapeOptions
         pOpt = SetPreviewOptions()
         '' The rule is that if there is a tt is an IMDB otherwise is a TMDB
-        _TMDB.GetSearchTVShowInfoAsync(txtTMDBID.Text, _tmpTVShow, pOpt)
+        _TMDB.GetSearchTVShowInfoAsync(txtTMDBID.Text, pOpt)
 
     End Sub
 
@@ -293,7 +293,7 @@ Public Class dlgTMDBSearchResults_TV
         End If
     End Sub
 
-    Private Sub SearchResultsDownloaded(ByVal M As TMDB.SearchResults_TVShow)
+    Private Sub SearchResultsDownloaded(ByVal M As SearchResults_TVShow)
         tvResults.Nodes.Clear()
         ClearInfo()
         If M IsNot Nothing AndAlso M.Matches.Count > 0 Then
@@ -347,7 +347,7 @@ Public Class dlgTMDBSearchResults_TV
         pnlLoading.Visible = True
         Label3.Text = Master.eLang.GetString(875, "Downloading details...")
 
-        _TMDB.GetSearchTVShowInfoAsync(tvResults.SelectedNode.Tag.ToString, _tmpTVShow, pOpt)
+        _TMDB.GetSearchTVShowInfoAsync(tvResults.SelectedNode.Tag.ToString, pOpt)
     End Sub
 
     Private Sub tmrWait_Tick(ByVal sender As Object, ByVal e As EventArgs) Handles tmrWait.Tick

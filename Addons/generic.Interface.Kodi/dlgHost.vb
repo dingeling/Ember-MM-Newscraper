@@ -34,7 +34,7 @@ Public Class dlgHost
     'all sources of current host
     Private currentHostRemoteSources As New List(Of XBMCRPC.List.Items.SourcesItem)
     'JSONRPC version of host - may be retrieved manually if user hits "Check Connection" button
-    Private JsonHostversion As String = String.Empty
+    Private JsonHostVersionInfo As Kodi.APIKodi.APIVersionInfo
     'List of all show and movie sources in Ember
     Private LocalSources As New Dictionary(Of String, Enums.ContentType)
     Private RemoteSources As New List(Of String)
@@ -104,13 +104,12 @@ Public Class dlgHost
     ''' 2015/06/26 Cocotus - First implementation
     ''' </remarks>
     Private Sub Setup()
-        lblLoading.Text = Master.eLang.GetString(326, "Loading. Please wait...")
         Text = Master.eLang.GetString(1422, "Kodi Interface")
         btnOK.Text = Master.eLang.GetString(179, "OK")
         btnCancel.Text = Master.eLang.GetString(167, "Cancel")
         btnCustomRemotePath.Text = Master.eLang.GetString(28, "Add")
         btnHostConnectionCheck.Text = Master.eLang.GetString(1423, "Check Connection")
-        btnHostPopulateSources.Text = Master.eLang.GetString(1424, "Populate Sources")
+        btnHostPopulateSources.Text = Master.eLang.GetString(1424, "Read Sources from Kodi")
 
         gbHostDetails.Text = Master.eLang.GetString(1425, "Kodi Host")
         gbHostMoviesetPath.Text = "Kodi " & Master.eLang.GetString(986, "MovieSet Artwork Folder")
@@ -148,10 +147,10 @@ Public Class dlgHost
         Dim sPath As String
 
         'populate all library sources in Ember into embersources
-        For Each moviesources As Database.DBSource In Master.MovieSources
+        For Each moviesources As Database.DBSource In Master.DB.GetSources_Movie
             LocalSources.Add(moviesources.Path, Enums.ContentType.Movie)
         Next
-        For Each showsources As Database.DBSource In Master.TVShowSources
+        For Each showsources As Database.DBSource In Master.DB.GetSources_TVShow
             LocalSources.Add(showsources.Path, Enums.ContentType.TV)
         Next
 
@@ -219,11 +218,11 @@ Public Class dlgHost
     ''' Send JSON API request to Kodi to check if entered host data is correct
     ''' </remarks>
     Private Sub btnHostConnectionCheck_Click(sender As Object, e As EventArgs) Handles btnHostConnectionCheck.Click
-        lblLoading.Text = String.Concat(Master.eLang.GetString(1423, "Check Connection"), " ...")
+        'lblLoading.Text = String.Concat(Master.eLang.GetString(1423, "Check Connection"), " ...")
         SetControlsEnabled(False)
         SetInfo()
 
-        JsonHostversion = String.Empty
+        JsonHostVersionInfo = New Kodi.APIKodi.APIVersionInfo
         'start backgroundworker: check for JSONversion
         bwLoadInfo.RunWorkerAsync(2)
         While bwLoadInfo.IsBusy
@@ -233,10 +232,10 @@ Public Class dlgHost
 
         SetControlsEnabled(True)
 
-        If String.IsNullOrEmpty(JsonHostversion) Then
+        If JsonHostVersionInfo Is Nothing Then
             MessageBox.Show(Master.eLang.GetString(1434, "There was a problem communicating with host."), Master.eLang.GetString(356, "Warning"), MessageBoxButtons.OK, MessageBoxIcon.Exclamation)
         Else
-            MessageBox.Show(Master.eLang.GetString(1435, "Connection to host successful!") & Environment.NewLine & "API-Version: " & JsonHostversion, "", MessageBoxButtons.OK, MessageBoxIcon.Information)
+            MessageBox.Show(Master.eLang.GetString(1435, "Connection to host successful!") & Environment.NewLine & "API-Version: " & JsonHostVersionInfo.ReadingFriendly, "", MessageBoxButtons.OK, MessageBoxIcon.Information)
         End If
     End Sub
     ''' <summary>
@@ -249,7 +248,6 @@ Public Class dlgHost
     ''' request will be executed in backgroundworker
     ''' </remarks>
     Private Sub btnHostPopulateSources_Click(ByVal sender As Object, ByVal e As EventArgs) Handles btnHostPopulateSources.Click
-        lblLoading.Text = Master.eLang.GetString(326, "Loading. Please wait...")
         SetControlsEnabled(False)
         SetInfo()
 
@@ -293,11 +291,11 @@ Public Class dlgHost
     End Sub
 
     Private Sub SetControlsEnabled(ByVal isEnabled As Boolean)
-        pnlLoading.Visible = Not isEnabled
         gbHostDetails.Enabled = isEnabled
         btnHostPopulateSources.Enabled = isEnabled
         btnOK.Enabled = isEnabled
         btnCancel.Enabled = isEnabled
+        prgLoading.Visible = Not isEnabled
         txtHostIP.Enabled = isEnabled
         txtLabel.Enabled = isEnabled
         txtPassword.Enabled = isEnabled
@@ -330,7 +328,7 @@ Public Class dlgHost
                 currentHostRemoteSources = Kodi.APIKodi.GetSources(_currentHost)
             Case 2
                 'API request: Get JSONRPC version of host
-                JsonHostversion = Kodi.APIKodi.GetHostJSONVersion(_currentHost)
+                JsonHostVersionInfo = Kodi.APIKodi.GetHostJSONVersion(_currentHost)
         End Select
     End Sub
 

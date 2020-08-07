@@ -62,11 +62,15 @@ Partial Public Class clsXMLSettings
     Private _generalinfopanelstatemovieset As Integer
     Private _generalinfopanelstatetvshow As Integer
     Private _generallanguage As String
+    Private _generalmainfiltersortcolumn_episodes As Integer
     Private _generalmainfiltersortcolumn_movies As Integer
     Private _generalmainfiltersortcolumn_moviesets As Integer
+    Private _generalmainfiltersortcolumn_seasons As Integer
     Private _generalmainfiltersortcolumn_shows As Integer
+    Private _generalmainfiltersortorder_episodes As Integer
     Private _generalmainfiltersortorder_movies As Integer
     Private _generalmainfiltersortorder_moviesets As Integer
+    Private _generalmainfiltersortorder_seasons As Integer
     Private _generalmainfiltersortorder_shows As Integer
     Private _generalmoviesettheme As String
     Private _generalmovietheme As String
@@ -151,7 +155,6 @@ Partial Public Class clsXMLSettings
     Private _movieimagesgetblankimages As Boolean
     Private _movieimagesgetenglishimages As Boolean
     Private _movieimagesmedialanguageonly As Boolean
-    Private _movieimdburl As String
     Private _movielandscapekeepexisting As Boolean
     Private _movielevtolerance As Integer
     Private _movielockactors As Boolean
@@ -176,6 +179,7 @@ Partial Public Class clsXMLSettings
     Private _movielocktitle As Boolean
     Private _movielocktop250 As Boolean
     Private _movielocktrailer As Boolean
+    Private _movielockuserrating As Boolean
     Private _movielockcredits As Boolean
     Private _movielockyear As Boolean
     Private _moviemetadataperfiletype As List(Of MetadataPerType)
@@ -215,6 +219,7 @@ Partial Public Class clsXMLSettings
     Private _moviescrapercollectionsextendedinfo As Boolean
     Private _moviescrapercollectionsyamjcompatiblesets As Boolean
     Private _moviescrapercountry As Boolean
+    Private _moviescrapercountrylimit As Integer
     Private _moviescraperdirector As Boolean
     Private _moviescraperdurationruntimeformat As String
     Private _moviescrapergenre As Boolean
@@ -224,6 +229,7 @@ Partial Public Class clsXMLSettings
     Private _moviescrapermpaa As Boolean
     Private _moviescrapermpaanotrated As String
     Private _moviescraperoriginaltitle As Boolean
+    Private _moviescraperoriginaltitleastitle As Boolean
     Private _moviescrapercertonlyvalue As Boolean
     Private _moviescraperoutline As Boolean
     Private _moviescraperoutlinelimit As Integer
@@ -242,7 +248,7 @@ Partial Public Class clsXMLSettings
     Private _moviescrapertrailer As Boolean
     Private _moviescraperusedetailview As Boolean
     Private _moviescraperusemdduration As Boolean
-    Private _moviescrapercertfsk As Boolean
+    Private _moviescraperuserrating As Boolean
     Private _moviescrapercredits As Boolean
     Private _moviescraperxbmctrailerformat As Boolean
     Private _moviescraperyear As Boolean
@@ -394,6 +400,7 @@ Partial Public Class clsXMLSettings
     Private _tvlockepisoderating As Boolean
     Private _tvlockepisoderuntime As Boolean
     Private _tvlockepisodetitle As Boolean
+    Private _tvlockepisodeuserrating As Boolean
     Private _tvlockseasonplot As Boolean
     Private _tvlockseasontitle As Boolean
     Private _tvlockshowactors As Boolean
@@ -410,47 +417,57 @@ Partial Public Class clsXMLSettings
     Private _tvlockshowstatus As Boolean
     Private _tvlockshowstudio As Boolean
     Private _tvlockshowtitle As Boolean
+    Private _tvlockshowuserrating As Boolean
     Private _tvmetadataperfiletype As List(Of MetadataPerType)
     Private _tvmultipartmatching As String
     Private _tvscanordermodify As Boolean
+    Private _tvscrapercastwithimgonly As Boolean
     Private _tvscrapercleanfields As Boolean
     Private _tvscraperdurationruntimeformat As String
     Private _tvscraperepisodeactors As Boolean
+    Private _tvscraperepisodeactorslimit As Integer
     Private _tvscraperepisodeaired As Boolean
     Private _tvscraperepisodecredits As Boolean
     Private _tvscraperepisodedirector As Boolean
     Private _tvscraperepisodegueststars As Boolean
+    Private _tvscraperepisodegueststarslimit As Integer
     Private _tvscraperepisodegueststarstoactors As Boolean
     Private _tvscraperepisodeplot As Boolean
     Private _tvscraperepisoderating As Boolean
     Private _tvscraperepisoderuntime As Boolean
     Private _tvscraperepisodetitle As Boolean
+    Private _tvscraperepisodeuserrating As Boolean
     Private _tvscrapermetadatascan As Boolean
     Private _tvscraperoptionsordering As Enums.EpisodeOrdering
     Private _tvscraperseasonaired As Boolean
     Private _tvscraperseasonplot As Boolean
     Private _tvscraperseasontitle As Boolean
     Private _tvscrapershowactors As Boolean
+    Private _tvscrapershowactorslimit As Integer
     Private _tvscrapershowcert As Boolean
     Private _tvscrapershowcertformpaa As Boolean
     Private _tvscrapershowcertformpaafallback As Boolean
-    Private _tvscrapershowcertfsk As Boolean
     Private _tvscrapershowcertlang As String
     Private _tvscrapershowcertonlyvalue As Boolean
     Private _tvscrapershowcreators As Boolean
     Private _tvscrapershowcountry As Boolean
+    Private _tvscrapershowcountrylimit As Integer
     Private _tvscrapershowepiguideurl As Boolean
     Private _tvscrapershowgenre As Boolean
+    Private _tvscrapershowgenrelimit As Integer
     Private _tvscrapershowmpaa As Boolean
     Private _tvscrapershowmpaanotrated As String
     Private _tvscrapershoworiginaltitle As Boolean
+    Private _tvscrapershoworiginaltitleastitle As Boolean
     Private _tvscrapershowplot As Boolean
     Private _tvscrapershowpremiered As Boolean
     Private _tvscrapershowrating As Boolean
     Private _tvscrapershowruntime As Boolean
     Private _tvscrapershowstatus As Boolean
     Private _tvscrapershowstudio As Boolean
+    Private _tvscrapershowstudiolimit As Integer
     Private _tvscrapershowtitle As Boolean
+    Private _tvscrapershowuserrating As Boolean
     Private _tvscraperusedisplayseasonepisode As Boolean
     Private _tvscraperusemdduration As Boolean
     Private _tvscraperusesruntimeforep As Boolean
@@ -491,7 +508,6 @@ Partial Public Class clsXMLSettings
     Private _tvshowclearlogokeepexisting As Boolean
     Private _tvshowextrafanartslimit As Integer
     Private _tvshowextrafanartskeepexisting As Boolean
-    Private _tvshowextrafanartsprefonly As Boolean
     Private _tvshowextrafanartsprefsize As Enums.TVFanartSize
     Private _tvshowextrafanartsprefsizeonly As Boolean
     Private _tvshowextrafanartspreselect As Boolean
@@ -1001,6 +1017,33 @@ Partial Public Class clsXMLSettings
         End Set
     End Property
 
+    Public Property TVScraperEpisodeActorsLimit() As Integer
+        Get
+            Return Me._tvscraperepisodeactorslimit
+        End Get
+        Set(ByVal value As Integer)
+            Me._tvscraperepisodeactorslimit = value
+        End Set
+    End Property
+
+    Public Property TVScraperEpisodeGuestStarsLimit() As Integer
+        Get
+            Return Me._tvscraperepisodegueststarslimit
+        End Get
+        Set(ByVal value As Integer)
+            Me._tvscraperepisodegueststarslimit = value
+        End Set
+    End Property
+
+    Public Property TVScraperShowActorsLimit() As Integer
+        Get
+            Return Me._tvscrapershowactorslimit
+        End Get
+        Set(ByVal value As Integer)
+            Me._tvscrapershowactorslimit = value
+        End Set
+    End Property
+
     Public Property MovieActorThumbsKeepExisting() As Boolean
         Get
             Return Me._movieactorthumbskeepexisting
@@ -1082,15 +1125,6 @@ Partial Public Class clsXMLSettings
         End Set
     End Property
 
-    Public Property MovieIMDBURL() As String
-        Get
-            Return Me._movieimdburl
-        End Get
-        Set(ByVal value As String)
-            Me._movieimdburl = value
-        End Set
-    End Property
-
     Public Property MovieBackdropsPath() As String
         Get
             Return Me._moviebackdropspath
@@ -1106,6 +1140,15 @@ Partial Public Class clsXMLSettings
         End Get
         Set(ByVal value As Boolean)
             Me._moviescrapercastwithimgonly = value
+        End Set
+    End Property
+
+    Public Property TVScraperCastWithImgOnly() As Boolean
+        Get
+            Return Me._tvscrapercastwithimgonly
+        End Get
+        Set(ByVal value As Boolean)
+            Me._tvscrapercastwithimgonly = value
         End Set
     End Property
 
@@ -1507,6 +1550,15 @@ Partial Public Class clsXMLSettings
         End Set
     End Property
 
+    Public Property TVLockEpisodeUserRating() As Boolean
+        Get
+            Return Me._tvlockepisodeuserrating
+        End Get
+        Set(ByVal value As Boolean)
+            Me._tvlockepisodeuserrating = value
+        End Set
+    End Property
+
     Public Property TVLockEpisodeRuntime() As Boolean
         Get
             Return Me._tvlockepisoderuntime
@@ -1630,15 +1682,6 @@ Partial Public Class clsXMLSettings
         End Get
         Set(ByVal value As Integer)
             Me._moviesetfanartheight = value
-        End Set
-    End Property
-
-    Public Property TVShowExtrafanartsPrefOnly() As Boolean
-        Get
-            Return Me._tvshowextrafanartsprefonly
-        End Get
-        Set(ByVal value As Boolean)
-            Me._tvshowextrafanartsprefonly = value
         End Set
     End Property
 
@@ -1858,6 +1901,15 @@ Partial Public Class clsXMLSettings
         End Set
     End Property
 
+    Public Property MovieScraperOriginalTitleAsTitle() As Boolean
+        Get
+            Return Me._moviescraperoriginaltitleastitle
+        End Get
+        Set(ByVal value As Boolean)
+            Me._moviescraperoriginaltitleastitle = value
+        End Set
+    End Property
+
     Public Property MovieScraperOutline() As Boolean
         Get
             Return Me._moviescraperoutline
@@ -1921,6 +1973,15 @@ Partial Public Class clsXMLSettings
         End Set
     End Property
 
+    Public Property MovieScraperCountryLimit() As Integer
+        Get
+            Return Me._moviescrapercountrylimit
+        End Get
+        Set(ByVal value As Integer)
+            Me._moviescrapercountrylimit = value
+        End Set
+    End Property
+
     Public Property MovieScraperStudioWithImgOnly() As Boolean
         Get
             Return Me._moviescraperstudiowithimgonly
@@ -1956,6 +2017,16 @@ Partial Public Class clsXMLSettings
             Me._moviescrapertrailer = value
         End Set
     End Property
+
+    Public Property MovieScraperUserRating() As Boolean
+        Get
+            Return Me._moviescraperuserrating
+        End Get
+        Set(ByVal value As Boolean)
+            Me._moviescraperuserrating = value
+        End Set
+    End Property
+
     Public Property MovieScraperUseDetailView() As Boolean
         Get
             Return Me._moviescraperusedetailview
@@ -2123,6 +2194,24 @@ Partial Public Class clsXMLSettings
         End Get
         Set(ByVal value As Integer)
             Me._moviescrapergenrelimit = value
+        End Set
+    End Property
+
+    Public Property TVScraperShowGenreLimit() As Integer
+        Get
+            Return Me._tvscrapershowgenrelimit
+        End Get
+        Set(ByVal value As Integer)
+            Me._tvscrapershowgenrelimit = value
+        End Set
+    End Property
+
+    Public Property TVScraperShowStudioLimit() As Integer
+        Get
+            Return Me._tvscrapershowstudiolimit
+        End Get
+        Set(ByVal value As Integer)
+            Me._tvscrapershowstudiolimit = value
         End Set
     End Property
 
@@ -2341,23 +2430,6 @@ Partial Public Class clsXMLSettings
         End Set
     End Property
 
-    Public Property MovieScraperCertFSK() As Boolean
-        Get
-            Return Me._moviescrapercertfsk
-        End Get
-        Set(ByVal value As Boolean)
-            Me._moviescrapercertfsk = value
-        End Set
-    End Property
-
-    Public Property TVScraperShowCertFSK() As Boolean
-        Get
-            Return Me._tvscrapershowcertfsk
-        End Get
-        Set(ByVal value As Boolean)
-            Me._tvscrapershowcertfsk = value
-        End Set
-    End Property
     Public Property MovieLockStudio() As Boolean
         Get
             Return Me._movielockstudio
@@ -2398,6 +2470,14 @@ Partial Public Class clsXMLSettings
         End Get
         Set(ByVal value As Boolean)
             Me._movielocktrailer = value
+        End Set
+    End Property
+    Public Property MovieLockUserRating() As Boolean
+        Get
+            Return Me._movielockuserrating
+        End Get
+        Set(ByVal value As Boolean)
+            Me._movielockuserrating = value
         End Set
     End Property
 
@@ -4301,6 +4381,15 @@ Partial Public Class clsXMLSettings
         End Set
     End Property
 
+    Public Property TVScraperEpisodeUserRating() As Boolean
+        Get
+            Return Me._tvscraperepisodeuserrating
+        End Get
+        Set(ByVal value As Boolean)
+            Me._tvscraperepisodeuserrating = value
+        End Set
+    End Property
+
     Public Property TVScraperSeasonAired() As Boolean
         Get
             Return Me._tvscraperseasonaired
@@ -4355,6 +4444,15 @@ Partial Public Class clsXMLSettings
         End Set
     End Property
 
+    Public Property TVScraperShowCountryLimit() As Integer
+        Get
+            Return Me._tvscrapershowcountrylimit
+        End Get
+        Set(ByVal value As Integer)
+            Me._tvscrapershowcountrylimit = value
+        End Set
+    End Property
+
     Public Property TVScraperShowEpiGuideURL() As Boolean
         Get
             Return Me._tvscrapershowepiguideurl
@@ -4388,6 +4486,15 @@ Partial Public Class clsXMLSettings
         End Get
         Set(ByVal value As Boolean)
             Me._tvscrapershoworiginaltitle = value
+        End Set
+    End Property
+
+    Public Property TVScraperShowOriginalTitleAsTitle() As Boolean
+        Get
+            Return Me._tvscrapershoworiginaltitleastitle
+        End Get
+        Set(ByVal value As Boolean)
+            Me._tvscrapershoworiginaltitleastitle = value
         End Set
     End Property
 
@@ -4478,6 +4585,15 @@ Partial Public Class clsXMLSettings
         End Get
         Set(ByVal value As Boolean)
             Me._tvscrapershowtitle = value
+        End Set
+    End Property
+
+    Public Property TVScraperShowUserRating() As Boolean
+        Get
+            Return Me._tvscrapershowuserrating
+        End Get
+        Set(ByVal value As Boolean)
+            Me._tvscrapershowuserrating = value
         End Set
     End Property
 
@@ -4787,6 +4903,15 @@ Partial Public Class clsXMLSettings
         End Set
     End Property
 
+    Public Property TVLockShowUserRating() As Boolean
+        Get
+            Return Me._tvlockshowuserrating
+        End Get
+        Set(ByVal value As Boolean)
+            Me._tvlockshowuserrating = value
+        End Set
+    End Property
+
     Public Property TVLockShowMPAA() As Boolean
         Get
             Return Me._tvlockshowmpaa
@@ -5012,6 +5137,24 @@ Partial Public Class clsXMLSettings
         End Set
     End Property
 
+    Public Property GeneralMainFilterSortColumn_Episodes() As Integer
+        Get
+            Return Me._generalmainfiltersortcolumn_episodes
+        End Get
+        Set(ByVal value As Integer)
+            Me._generalmainfiltersortcolumn_episodes = value
+        End Set
+    End Property
+
+    Public Property GeneralMainFilterSortColumn_Seasons() As Integer
+        Get
+            Return Me._generalmainfiltersortcolumn_seasons
+        End Get
+        Set(ByVal value As Integer)
+            Me._generalmainfiltersortcolumn_seasons = value
+        End Set
+    End Property
+
     Public Property GeneralMainFilterSortOrder_Movies() As Integer
         Get
             Return Me._generalmainfiltersortorder_movies
@@ -5036,6 +5179,24 @@ Partial Public Class clsXMLSettings
         End Get
         Set(ByVal value As Integer)
             Me._generalmainfiltersortorder_shows = value
+        End Set
+    End Property
+
+    Public Property GeneralMainFilterSortOrder_Seasons() As Integer
+        Get
+            Return Me._generalmainfiltersortorder_seasons
+        End Get
+        Set(ByVal value As Integer)
+            Me._generalmainfiltersortorder_seasons = value
+        End Set
+    End Property
+
+    Public Property GeneralMainFilterSortOrder_Episodes() As Integer
+        Get
+            Return Me._generalmainfiltersortorder_episodes
+        End Get
+        Set(ByVal value As Integer)
+            Me._generalmainfiltersortorder_episodes = value
         End Set
     End Property
 
